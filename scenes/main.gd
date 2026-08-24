@@ -25,24 +25,50 @@ func _ready() -> void:
 	deck.create_standard_deck()
 	deck.shuffle()
 
-	await deal_starting_hands()
+	await play_opening_deal()
 
-	var starting_card := deck.draw_card()
-	discard_pile.append(starting_card)
-
-	display_player_hand()
-	display_cpu_hand()
-	display_draw_pile()
-	display_discard_pile()
-	
 	is_player_turn = true
 
 
-func deal_starting_hands() -> void:
+func play_opening_deal() -> void:
+	var deck_view := create_deck_view()
+
+	await deal_starting_hands_from(deck_view)
+
+	await deck_view.move_to(
+		draw_pile_container.global_position,
+		0.4
+	)
+
+	await deal_starting_discard()
+
+	deck_view.queue_free()
+
+	display_draw_pile()
+
+
+func create_deck_view() -> CardView:
+	var deck_view: CardView = CARD_VIEW_SCENE.instantiate()
+
+	animation_layer.add_child(deck_view)
+	deck_view.show_back()
+
+	# Starting position of the deck before dealing.
+	# Adjust this if you want the dealer deck somewhere else.
+	deck_view.global_position = Vector2(296, 148)
+
+	return deck_view
+
+
+func deal_starting_hands_from(deck_view: CardView) -> void:
 	for i in STARTING_HAND_SIZE:
 		var player_card: CardData = deck.draw_card()
 
-		await animate_deal_to_player(player_card)
+		await animate_deal_card(
+			player_card,
+			deck_view.global_position,
+			get_player_draw_target()
+		)
 
 		player_hand.append(player_card)
 		display_player_hand()
@@ -51,12 +77,62 @@ func deal_starting_hands() -> void:
 
 		var cpu_card: CardData = deck.draw_card()
 
-		await animate_deal_to_cpu(cpu_card)
+		await animate_deal_card(
+			cpu_card,
+			deck_view.global_position,
+			get_cpu_draw_target()
+		)
 
 		cpu_hand.append(cpu_card)
 		display_cpu_hand()
 
 		await get_tree().create_timer(0.08).timeout
+
+
+func animate_deal_card(
+	card: CardData,
+	start_position: Vector2,
+	target_position: Vector2
+) -> void:
+	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
+
+	animation_layer.add_child(card_view)
+
+	card_view.show_back(card)
+	card_view.global_position = start_position
+
+	await card_view.move_to(
+		target_position,
+		0.25
+	)
+
+	card_view.queue_free()
+
+
+func deal_starting_discard() -> void:
+	var starting_card: CardData = deck.draw_card()
+
+	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
+
+	animation_layer.add_child(card_view)
+
+	card_view.show_back(starting_card)
+	card_view.global_position = draw_pile_container.global_position
+
+	await card_view.move_to(
+		discard_pile_container.global_position,
+		0.35
+	)
+
+	card_view.show_card(starting_card)
+
+	discard_pile.append(starting_card)
+
+	await get_tree().create_timer(0.2).timeout
+
+	card_view.queue_free()
+
+	display_discard_pile()
 
 
 func display_player_hand() -> void:
@@ -67,6 +143,7 @@ func display_player_hand() -> void:
 		var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 		player_hand_container.add_child(card_view)
+
 		card_view.show_card(card)
 
 		card_view.card_double_clicked.connect(
@@ -82,6 +159,7 @@ func display_cpu_hand() -> void:
 		var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 		cpu_hand_container.add_child(card_view)
+
 		card_view.show_back(card)
 
 
@@ -95,6 +173,7 @@ func display_draw_pile() -> void:
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 	draw_pile_container.add_child(card_view)
+
 	card_view.show_back()
 
 	card_view.card_clicked.connect(
@@ -112,10 +191,16 @@ func display_discard_pile() -> void:
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 	discard_pile_container.add_child(card_view)
-	card_view.show_card(discard_pile.back())
+
+	var top_card: CardData = discard_pile.back()
+
+	card_view.show_card(top_card)
 
 
-func can_play_card(card: CardData, top_card: CardData) -> bool:
+func can_play_card(
+	card: CardData,
+	top_card: CardData
+) -> bool:
 	return (
 		card.rank == CardData.Rank.EIGHT
 		or card.rank == top_card.rank
@@ -130,10 +215,11 @@ func _on_player_card_double_clicked(
 	if !is_player_turn or is_game_over:
 		return
 
-	if !can_play_card(card, discard_pile.back()):
+	var top_card: CardData = discard_pile.back()
+
+	if !can_play_card(card, top_card):
 		return
 
-	# Lock player input immediately.
 	is_player_turn = false
 
 	await animate_card_to_discard(card_view)
@@ -156,7 +242,9 @@ func _on_player_card_double_clicked(
 	await cpu_turn()
 
 
-func _on_draw_pile_card_clicked(_card: CardData) -> void:
+func _on_draw_pile_card_clicked(
+	_card: CardData
+) -> void:
 	if !is_player_turn or is_game_over:
 		return
 
@@ -199,7 +287,6 @@ func cpu_turn() -> void:
 		var card_view := find_cpu_card_view(card_to_play)
 
 		if card_view:
-			# Reveal the CPU card before moving it.
 			card_view.show_card(card_to_play)
 
 			await animate_card_to_discard(card_view)
@@ -224,52 +311,82 @@ func cpu_turn() -> void:
 			display_cpu_hand()
 			display_draw_pile()
 
-		if cpu_hand.is_empty():
-			is_game_over = true
-			print("CPU wins!")
-			return
+	if cpu_hand.is_empty():
+		is_game_over = true
+		print("CPU wins!")
+		return
 
 	is_player_turn = true
 
 
-func animate_card_to_discard(card_view: CardView) -> void:
+func refill_draw_pile() -> bool:
+	if !deck.cards.is_empty():
+		return true
+
+	if discard_pile.size() <= 1:
+		return false
+
+	var top_card: CardData = discard_pile.pop_back()
+
+	for card in discard_pile:
+		deck.cards.append(card)
+
+	discard_pile.clear()
+	discard_pile.append(top_card)
+
+	deck.shuffle()
+
+	display_draw_pile()
+
+	return true
+
+
+func animate_card_to_discard(
+	card_view: CardView
+) -> void:
 	var starting_position := card_view.global_position
 
 	card_view.reparent(animation_layer)
+
 	card_view.global_position = starting_position
 
-	var target_position := discard_pile_container.global_position
+	await card_view.move_to(
+		discard_pile_container.global_position
+	)
 
-	await card_view.move_to(target_position)
 
-
-func animate_draw_to_player(card: CardData) -> void:
+func animate_draw_to_player(
+	card: CardData
+) -> void:
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 	animation_layer.add_child(card_view)
 
-	card_view.show_card(card)
+	card_view.show_back(card)
+
 	card_view.global_position = draw_pile_container.global_position
 
-	var target_position := get_player_draw_target()
-
-	await card_view.move_to(target_position)
+	await card_view.move_to(
+		get_player_draw_target()
+	)
 
 	card_view.queue_free()
 
 
-func animate_draw_to_cpu(card: CardData) -> void:
+func animate_draw_to_cpu(
+	card: CardData
+) -> void:
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 	animation_layer.add_child(card_view)
 
-	# CPU cards stay hidden while being drawn.
 	card_view.show_back(card)
+
 	card_view.global_position = draw_pile_container.global_position
 
-	var target_position := get_cpu_draw_target()
-
-	await card_view.move_to(target_position)
+	await card_view.move_to(
+		get_cpu_draw_target()
+	)
 
 	card_view.queue_free()
 
@@ -292,63 +409,11 @@ func get_cpu_draw_target() -> Vector2:
 	)
 
 
-func find_cpu_card_view(card: CardData) -> CardView:
+func find_cpu_card_view(
+	card: CardData
+) -> CardView:
 	for child in cpu_hand_container.get_children():
 		if child is CardView and child.card_data == card:
 			return child
 
 	return null
-	
-
-func refill_draw_pile() -> bool:
-	if !deck.cards.is_empty():
-		return true
-
-	# We cannot recycle anything if the discard pile only
-	# contains its visible top card.
-	if discard_pile.size() <= 1:
-		return false
-
-	var top_card: CardData = discard_pile.pop_back()
-
-	for card in discard_pile:
-		deck.cards.append(card)
-
-	discard_pile.clear()
-	discard_pile.append(top_card)
-
-	deck.shuffle()
-
-	display_draw_pile()
-
-	return true
-
-
-func animate_deal_to_player(card: CardData) -> void:
-	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
-
-	animation_layer.add_child(card_view)
-
-	card_view.show_back(card)
-	card_view.global_position = draw_pile_container.global_position
-
-	var target_position := get_player_draw_target()
-
-	await card_view.move_to(target_position, 0.3)
-	
-	card_view.queue_free()
-	
-	
-func animate_deal_to_cpu(card: CardData) -> void:
-	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
-
-	animation_layer.add_child(card_view)
-
-	card_view.show_back(card)
-	card_view.global_position = draw_pile_container.global_position
-
-	var target_position := get_cpu_draw_target()
-
-	await card_view.move_to(target_position, 0.3)
-
-	card_view.queue_free()
