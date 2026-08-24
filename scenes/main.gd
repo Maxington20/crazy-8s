@@ -143,12 +143,12 @@ func _on_draw_pile_card_clicked(_card: CardData) -> void:
 	if !is_player_turn or is_game_over:
 		return
 
-	if deck.cards.is_empty():
+	if !refill_draw_pile():
 		return
 
 	is_player_turn = false
 
-	var drawn_card := deck.draw_card()
+	var drawn_card: CardData = deck.draw_card()
 
 	await animate_draw_to_player(drawn_card)
 
@@ -197,8 +197,8 @@ func cpu_turn() -> void:
 		display_discard_pile()
 
 	else:
-		if !deck.cards.is_empty():
-			var drawn_card := deck.draw_card()
+		if refill_draw_pile():
+			var drawn_card: CardData = deck.draw_card()
 
 			await animate_draw_to_cpu(drawn_card)
 
@@ -207,10 +207,10 @@ func cpu_turn() -> void:
 			display_cpu_hand()
 			display_draw_pile()
 
-	if cpu_hand.is_empty():
-		is_game_over = true
-		print("CPU wins!")
-		return
+		if cpu_hand.is_empty():
+			is_game_over = true
+			print("CPU wins!")
+			return
 
 	is_player_turn = true
 
@@ -281,3 +281,27 @@ func find_cpu_card_view(card: CardData) -> CardView:
 			return child
 
 	return null
+	
+
+func refill_draw_pile() -> bool:
+	if !deck.cards.is_empty():
+		return true
+
+	# We cannot recycle anything if the discard pile only
+	# contains its visible top card.
+	if discard_pile.size() <= 1:
+		return false
+
+	var top_card: CardData = discard_pile.pop_back()
+
+	for card in discard_pile:
+		deck.cards.append(card)
+
+	discard_pile.clear()
+	discard_pile.append(top_card)
+
+	deck.shuffle()
+
+	display_draw_pile()
+
+	return true
