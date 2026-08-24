@@ -1,6 +1,13 @@
 [gd_scene format=3 uid="uid://cea52mmgvyh2e"]
 
 [ext_resource type="Script" uid="uid://bk7banx6my7bn" path="res://scenes/main.gd" id="1_o5qli"]
+[ext_resource type="Texture2D" uid="uid://b4r7gda0roj6g" path="res://art/Crazy8Scene.png" id="2_0wfyh"]
 
 [node name="Main" type="Node2D" unique_id=322788313]
 script = ExtResource("1_o5qli")
+
+[node name="Background" type="Sprite2D" parent="." unique_id=1163292318]
+texture_filter = 1
+texture = ExtResource("2_0wfyh")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1215409837]

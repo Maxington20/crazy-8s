@@ -16,8 +16,11 @@ config/icon="res://icon.svg"
 
 [display]
 
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
 
 [dotnet]
 
@@ -30,3 +33,4 @@ project/assembly_name="Crazy8s"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+2d/snap/snap_2d_transforms_to_pixel=true
