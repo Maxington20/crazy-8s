@@ -22,19 +22,6 @@ func _ready() -> void:
 	display_draw_pile()
 	display_discard_pile()
 	
-	
-	#while !is_game_over:
-		#if !is_player_turn:
-			#var card_to_play := find_cpu_playable_card()
-			#
-			#if card_to_play:
-				## play the card
-				#pass
-			#else:
-				##draw a card
-				#pass
-	#
-	
 
 func deal_starting_hands() -> void:
 	for i in STARTING_HAND_SIZE:
@@ -76,7 +63,10 @@ func display_draw_pile() -> void:
 	var card_view := CARD_VIEW_SCENE.instantiate()
 	draw_pile_container.add_child(card_view)
 	card_view.show_back()
-	
+	card_view.card_clicked.connect(
+		func(_card): _on_draw_pile_card_clicked()
+	)
+		
 	
 func display_discard_pile(card: CardData = null) -> void:
 	var discard_pile_container := $UI/GameUI/DiscardPile
@@ -121,6 +111,20 @@ func _on_player_card_clicked(card: CardData) -> void:
 		
 		cpu_turn()
 		
+		
+
+func _on_draw_pile_card_clicked() -> void:
+	if !is_player_turn or is_game_over:
+		return
+		
+	var drawn_card := deck.draw_card()
+
+	if drawn_card:
+		player_hand.append(drawn_card)
+		display_player_hand()
+		is_player_turn = false
+		await get_tree().create_timer(3.0).timeout
+		cpu_turn()
 
 func find_cpu_playable_card() -> CardData:
 	var top_card = discard_pile.back()
