@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://3koivljbccwn"]
+
+[ext_resource type="Script" uid="uid://bm5p8311meyx2" path="res://scenes/card_view.gd" id="1_apa55"]
+[ext_resource type="Texture2D" uid="uid://ch5fop1idmwos" path="res://art/Card Front.png" id="2_1dx1k"]
+[ext_resource type="Texture2D" uid="uid://de2pu6v65esl7" path="res://art/CardBack.png" id="3_o1ium"]
+
+[node name="CardView" type="Control" unique_id=11784433]
+custom_minimum_size = Vector2(48, 64)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_apa55")
+card_sheet = ExtResource("2_1dx1k")
+card_back = ExtResource("3_o1ium")
+
+[node name="CardImage" type="TextureRect" parent="." unique_id=1722039964]
+custom_minimum_size = Vector2(48, 64)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
