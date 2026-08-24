@@ -8,7 +8,7 @@ var player_hand: Array[CardData] = []
 var cpu_hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
 
-var is_player_turn: bool = true
+var is_player_turn: bool = false
 var is_game_over: bool = false
 
 
@@ -25,7 +25,7 @@ func _ready() -> void:
 	deck.create_standard_deck()
 	deck.shuffle()
 
-	deal_starting_hands()
+	await deal_starting_hands()
 
 	var starting_card := deck.draw_card()
 	discard_pile.append(starting_card)
@@ -34,12 +34,29 @@ func _ready() -> void:
 	display_cpu_hand()
 	display_draw_pile()
 	display_discard_pile()
+	
+	is_player_turn = true
 
 
 func deal_starting_hands() -> void:
 	for i in STARTING_HAND_SIZE:
-		player_hand.append(deck.draw_card())
-		cpu_hand.append(deck.draw_card())
+		var player_card: CardData = deck.draw_card()
+
+		await animate_deal_to_player(player_card)
+
+		player_hand.append(player_card)
+		display_player_hand()
+
+		await get_tree().create_timer(0.08).timeout
+
+		var cpu_card: CardData = deck.draw_card()
+
+		await animate_deal_to_cpu(cpu_card)
+
+		cpu_hand.append(cpu_card)
+		display_cpu_hand()
+
+		await get_tree().create_timer(0.08).timeout
 
 
 func display_player_hand() -> void:
@@ -305,3 +322,33 @@ func refill_draw_pile() -> bool:
 	display_draw_pile()
 
 	return true
+
+
+func animate_deal_to_player(card: CardData) -> void:
+	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
+
+	animation_layer.add_child(card_view)
+
+	card_view.show_back(card)
+	card_view.global_position = draw_pile_container.global_position
+
+	var target_position := get_player_draw_target()
+
+	await card_view.move_to(target_position, 0.3)
+	
+	card_view.queue_free()
+	
+	
+func animate_deal_to_cpu(card: CardData) -> void:
+	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
+
+	animation_layer.add_child(card_view)
+
+	card_view.show_back(card)
+	card_view.global_position = draw_pile_container.global_position
+
+	var target_position := get_cpu_draw_target()
+
+	await card_view.move_to(target_position, 0.3)
+
+	card_view.queue_free()
