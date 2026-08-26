@@ -131,6 +131,8 @@ func deal_starting_discard() -> void:
 	card_view.queue_free()
 
 	display_discard_pile()
+	
+	game_state.active_suit = starting_card.suit
 
 
 func display_player_hand() -> void:
@@ -201,20 +203,33 @@ func _on_player_card_double_clicked(
 ) -> void:
 	if !game_state.is_player_turn or game_state.is_game_over:
 		return
-
+	
 	var top_card: CardData = discard_pile.back()
-
+	var extra_turn: bool = false
+	
 	if !rules.can_play_card(card, top_card, game_state):
 		return
 	
 	# check for special cards
 	if card.rank == CardData.Rank.EIGHT:
 		rules.eight_is_played(game_state)
+		# remove below after suit selectin for player complete
+		game_state.active_suit = card.suit
 	
 	else:
 		game_state.active_suit = card.suit
+		
+	if card.rank == CardData.Rank.TWO:
+		rules.two_is_played(game_state)
 	
-	game_state.is_player_turn = false
+	else:
+		game_state.pending_draw_count = 0
+	
+	if card.rank == CardData.Rank.JACK:
+		extra_turn = true
+	
+	if !extra_turn:
+		game_state.is_player_turn = false
 
 	await animate_card_to_discard(card_view)
 
@@ -231,9 +246,10 @@ func _on_player_card_double_clicked(
 		print("Player wins!")
 		return
 
-	await get_tree().create_timer(1.0).timeout
-
-	await cpu_turn()
+	await get_tree().create_timer(1.0).timeout		
+	
+	if !extra_turn:
+		await cpu_turn()
 
 
 func _on_draw_pile_card_clicked(
@@ -257,7 +273,7 @@ func _on_draw_pile_card_clicked(
 	display_draw_pile()
 
 	await get_tree().create_timer(1.0).timeout
-
+	
 	await cpu_turn()
 
 
@@ -272,11 +288,18 @@ func find_cpu_playable_card() -> CardData:
 
 
 func cpu_turn() -> void:
+	print("Entered cpu turn")
 	if game_state.is_game_over:
 		return
-
+	
+	var extra_turn = false
+	
+	await begin_cpu_turn()
+	
 	var card_to_play := find_cpu_playable_card()
-
+	
+	print("card to play ", card_to_play)
+	
 	if card_to_play:
 		
 		if card_to_play.rank == CardData.Rank.EIGHT:
@@ -284,8 +307,21 @@ func cpu_turn() -> void:
 		
 		else:
 			game_state.active_suit = card_to_play.suit
+			
+		if card_to_play.rank == CardData.Rank.TWO:
+			rules.two_is_played(game_state)
+		
+		else:
+			game_state.pending_draw_count = 0
+		
+		if card_to_play.rank == CardData.Rank.JACK:
+			print("Miss a turn player!")
+			extra_turn = true
 		
 		var card_view := find_cpu_card_view(card_to_play)
+		
+		print("card view ", card_view)
+		print("is queued for deletion ", is_queued_for_deletion())
 
 		if card_view:
 			card_view.show_card(card_to_play)
@@ -316,8 +352,15 @@ func cpu_turn() -> void:
 		game_state.is_game_over = true
 		print("CPU wins!")
 		return
-
+	
+	if extra_turn:
+		await get_tree().create_timer(1.0).timeout
+		await cpu_turn()
+		return
+	
+	await begin_player_turn()
 	game_state.is_player_turn = true
+	
 
 
 func refill_draw_pile() -> bool:
@@ -418,3 +461,41 @@ func find_cpu_card_view(
 			return child
 
 	return null
+	
+	
+func begin_player_turn() -> void:
+	if game_state.pending_draw_count and game_state.DrawTarget.PLAYER:
+		for card in game_state.pending_draw_count:
+			var drawn_card: CardData = deck.draw_card()
+
+			await animate_draw_to_player(drawn_card)
+
+			player_hand.append(drawn_card)
+
+			display_player_hand()
+			display_draw_pile()
+
+			await get_tree().create_timer(1.0).timeout
+		
+		game_state.DrawTarget.NONE
+		
+
+func begin_cpu_turn() -> void:
+	# draw cards if 2 was played
+	if game_state.pending_draw_count and game_state.DrawTarget.CPU:
+		# draw pending count of cards before playing
+		for count in game_state.pending_draw_count:
+			if refill_draw_pile():
+				var drawn_card: CardData = deck.draw_card()
+
+				await animate_draw_to_cpu(drawn_card)
+
+				cpu_hand.append(drawn_card)
+
+				display_cpu_hand()
+				display_draw_pile()
+				
+				await get_tree().create_timer(1.0).timeout
+	print("finished begin cpu turn")
+		
+		

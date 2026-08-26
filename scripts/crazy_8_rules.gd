@@ -8,23 +8,19 @@ func can_play_card(
 	game_state: GameState
 ) -> bool:
 	
-	var suit: CardData.Suit
-	
-	if game_state.active_suit:
-		suit = game_state.active_suit
-	
-	else:
-		suit = top_card.suit
-	
 	return (
 		card.rank == CardData.Rank.EIGHT
 		or card.rank == top_card.rank
-		or card.suit == suit
+		or card.suit == game_state.active_suit
 	)
 
 func two_is_played(game_state: GameState) -> void:
 	game_state.pending_draw_count += 2
-	
+	if game_state.is_player_turn:
+		game_state.DrawTarget.CPU
+	else:
+		game_state.DrawTarget.PLAYER
+
 
 func eight_is_played(game_state: GameState, hand: Array[CardData] = []) -> void:
 	
@@ -35,6 +31,7 @@ func eight_is_played(game_state: GameState, hand: Array[CardData] = []) -> void:
 		print("cpu changed suit to ", CardData.Suit.keys()[suit_to_pick])
 	else:
 		print("player played an eight! weeee")
+
 
 func get_most_common_suit(hand: Array[CardData]) -> CardData.Suit:
 	var suit_counts := {}
