@@ -7,10 +7,8 @@ var deck: Deck
 var player_hand: Array[CardData] = []
 var cpu_hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
-
-var is_player_turn: bool = false
-var is_game_over: bool = false
-
+var game_state: GameState = GameState.new()
+var rules: Crazy8Rules = Crazy8Rules.new()
 
 @onready var player_hand_container: HBoxContainer = $UI/GameUI/PlayerHand
 @onready var cpu_hand_container: HBoxContainer = $UI/GameUI/CpuHand
@@ -27,7 +25,7 @@ func _ready() -> void:
 
 	await play_opening_deal()
 
-	is_player_turn = true
+	game_state.is_player_turn = true
 
 
 func play_opening_deal() -> void:
@@ -197,30 +195,19 @@ func display_discard_pile() -> void:
 	card_view.show_card(top_card)
 
 
-func can_play_card(
-	card: CardData,
-	top_card: CardData
-) -> bool:
-	return (
-		card.rank == CardData.Rank.EIGHT
-		or card.rank == top_card.rank
-		or card.suit == top_card.suit
-	)
-
-
 func _on_player_card_double_clicked(
 	card_view: CardView,
 	card: CardData
 ) -> void:
-	if !is_player_turn or is_game_over:
+	if !game_state.is_player_turn or game_state.is_game_over:
 		return
 
 	var top_card: CardData = discard_pile.back()
 
-	if !can_play_card(card, top_card):
+	if !rules.can_play_card(card, top_card):
 		return
 
-	is_player_turn = false
+	game_state.is_player_turn = false
 
 	await animate_card_to_discard(card_view)
 
@@ -233,7 +220,7 @@ func _on_player_card_double_clicked(
 	display_discard_pile()
 
 	if player_hand.is_empty():
-		is_game_over = true
+		game_state.is_game_over = true
 		print("Player wins!")
 		return
 
@@ -245,13 +232,13 @@ func _on_player_card_double_clicked(
 func _on_draw_pile_card_clicked(
 	_card: CardData
 ) -> void:
-	if !is_player_turn or is_game_over:
+	if !game_state	.is_player_turn or game_state.is_game_over:
 		return
 
 	if !refill_draw_pile():
 		return
 
-	is_player_turn = false
+	game_state.is_player_turn = false
 
 	var drawn_card: CardData = deck.draw_card()
 
@@ -271,14 +258,14 @@ func find_cpu_playable_card() -> CardData:
 	var top_card: CardData = discard_pile.back()
 
 	for card in cpu_hand:
-		if can_play_card(card, top_card):
+		if rules.can_play_card(card, top_card):
 			return card
 
 	return null
 
 
 func cpu_turn() -> void:
-	if is_game_over:
+	if game_state.is_game_over:
 		return
 
 	var card_to_play := find_cpu_playable_card()
@@ -312,11 +299,11 @@ func cpu_turn() -> void:
 			display_draw_pile()
 
 	if cpu_hand.is_empty():
-		is_game_over = true
+		game_state.is_game_over = true
 		print("CPU wins!")
 		return
 
-	is_player_turn = true
+	game_state.is_player_turn = true
 
 
 func refill_draw_pile() -> bool:
