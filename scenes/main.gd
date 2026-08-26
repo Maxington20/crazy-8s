@@ -204,9 +204,16 @@ func _on_player_card_double_clicked(
 
 	var top_card: CardData = discard_pile.back()
 
-	if !rules.can_play_card(card, top_card):
+	if !rules.can_play_card(card, top_card, game_state):
 		return
-
+	
+	# check for special cards
+	if card.rank == CardData.Rank.EIGHT:
+		rules.eight_is_played(game_state)
+	
+	else:
+		game_state.active_suit = card.suit
+	
 	game_state.is_player_turn = false
 
 	await animate_card_to_discard(card_view)
@@ -258,7 +265,7 @@ func find_cpu_playable_card() -> CardData:
 	var top_card: CardData = discard_pile.back()
 
 	for card in cpu_hand:
-		if rules.can_play_card(card, top_card):
+		if rules.can_play_card(card, top_card, game_state):
 			return card
 
 	return null
@@ -271,6 +278,13 @@ func cpu_turn() -> void:
 	var card_to_play := find_cpu_playable_card()
 
 	if card_to_play:
+		
+		if card_to_play.rank == CardData.Rank.EIGHT:
+			rules.eight_is_played(game_state, cpu_hand)
+		
+		else:
+			game_state.active_suit = card_to_play.suit
+		
 		var card_view := find_cpu_card_view(card_to_play)
 
 		if card_view:
