@@ -261,6 +261,14 @@ func _on_player_card_double_clicked(
 			await get_tree().create_timer(2).timeout
 			message_container.visible = false
 			game_state.message_to_display = ""
+			
+	if player_hand.size() == 1:
+		game_state.message_to_display = "Knock Knock, Last Card!"
+		message_label.text = game_state.message_to_display
+		message_container.visible = true
+		await get_tree().create_timer(2).timeout
+		message_container.visible = false
+		game_state.message_to_display = ""
 	
 	if player_hand.is_empty():
 		game_state.is_game_over = true
@@ -380,7 +388,15 @@ func cpu_turn() -> void:
 
 			display_cpu_hand()
 			display_draw_pile()
-
+	
+	if cpu_hand.size() == 1:
+		game_state.message_to_display = "Knock Knock, Last Card!"
+		message_label.text = game_state.message_to_display
+		message_container.visible = true
+		await get_tree().create_timer(2).timeout
+		message_container.visible = false
+		game_state.message_to_display = ""
+	
 	if cpu_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "CPU Wins!"
