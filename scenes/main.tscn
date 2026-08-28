@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bk7banx6my7bn" path="res://scenes/main.gd" id="1_o5qli"]
 [ext_resource type="Texture2D" uid="uid://b4r7gda0roj6g" path="res://art/Crazy8Scene.png" id="2_0wfyh"]
+[ext_resource type="AudioStream" uid="uid://b5u3oel1r7myg" path="res://music/test song-Harpsichord.wav" id="3_sugp2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jvmx5"]
 bg_color = Color(0, 0, 0, 0.7176471)
@@ -139,3 +140,7 @@ layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 12
 text = "Player Misses A Turn!"
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=439117650]
+stream = ExtResource("3_sugp2")
+autoplay = true
