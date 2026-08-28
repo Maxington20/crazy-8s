@@ -179,8 +179,8 @@ func display_draw_pile() -> void:
 	for child in draw_pile_container.get_children():
 		child.queue_free()
 
-	if deck.cards.is_empty():
-		return
+	#if deck.cards.is_empty():
+		#return
 
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
@@ -285,7 +285,8 @@ func _on_draw_pile_card_clicked(
 
 	if !refill_draw_pile():
 		return
-
+	
+	game_state.active_draw_target = game_state.DrawTarget.NONE
 	game_state.is_player_turn = false
 
 	var drawn_card: CardData = deck.draw_card()
@@ -316,8 +317,6 @@ func cpu_turn() -> void:
 	print("Entered cpu turn")
 	if game_state.is_game_over:
 		return
-	
-	
 	
 	var extra_turn = false
 	
@@ -376,7 +375,7 @@ func cpu_turn() -> void:
 			var drawn_card: CardData = deck.draw_card()
 
 			await animate_draw_to_cpu(drawn_card)
-
+			game_state.active_draw_target = game_state.DrawTarget.NONE
 			cpu_hand.append(drawn_card)
 
 			display_cpu_hand()
@@ -507,16 +506,17 @@ func begin_player_turn() -> void:
 	
 	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.PLAYER:
 		for card in game_state.pending_draw_count:
-			var drawn_card: CardData = deck.draw_card()
+			if refill_draw_pile():
+				var drawn_card: CardData = deck.draw_card()
 
-			await animate_draw_to_player(drawn_card)
+				await animate_draw_to_player(drawn_card)
 
-			player_hand.append(drawn_card)
+				player_hand.append(drawn_card)
 
-			display_player_hand()
-			display_draw_pile()
+				display_player_hand()
+				display_draw_pile()
 
-			await get_tree().create_timer(0.5).timeout
+				await get_tree().create_timer(0.5).timeout
 		
 
 func begin_cpu_turn() -> void:	
