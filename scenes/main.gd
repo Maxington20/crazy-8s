@@ -18,10 +18,13 @@ var rules: Crazy8Rules = Crazy8Rules.new()
 @onready var turn_label: Label = $UI/GameUI/GameStatus/VBoxContainer/TurnDisplay
 @onready var active_suit_label: Label = $UI/GameUI/GameStatus/VBoxContainer/ActiveSuit
 @onready var game_status_box: PanelContainer = $UI/GameUI/GameStatus
+@onready var message_label : Label = $UI/GameUI/MessageContainer/HBoxContainer/Message
+@onready var message_container: PanelContainer = $UI/GameUI/MessageContainer
 
 
 func _ready() -> void:
 	game_status_box.visible = false
+	message_container.visible = false 
 	deck = Deck.new()
 
 	deck.create_standard_deck()
@@ -229,14 +232,15 @@ func _on_player_card_double_clicked(
 		game_state.active_suit = card.suit
 		
 	if card.rank == CardData.Rank.TWO:
-		rules.two_is_played(game_state)
-	
+		rules.two_is_played(game_state)		
+		game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards CPU!"
 	else:
 		game_state.pending_draw_count = 0
 		game_state.active_draw_target = game_state.DrawTarget.NONE
 	
 	if card.rank == CardData.Rank.JACK:
 		extra_turn = true
+		game_state.message_to_display = "Miss A Turn CPU!"
 	
 	if !extra_turn:
 		game_state.is_player_turn = false
@@ -250,9 +254,19 @@ func _on_player_card_double_clicked(
 
 	display_player_hand()
 	display_discard_pile()
-
+	
+	if game_state.message_to_display.length() > 0:
+			message_label.text = game_state.message_to_display
+			message_container.visible = true
+			await get_tree().create_timer(2).timeout
+			message_container.visible = false
+			game_state.message_to_display = ""
+	
 	if player_hand.is_empty():
 		game_state.is_game_over = true
+		game_state.message_to_display = "Player Wins!"
+		message_label.text = game_state.message_to_display
+		message_container.visible = true
 		print("Player wins!")
 		return
 	
@@ -317,25 +331,23 @@ func cpu_turn() -> void:
 		
 		if card_to_play.rank == CardData.Rank.EIGHT:
 			rules.eight_is_played(game_state, cpu_hand)
+			game_state.message_to_display = "CPU Changed Suit To " + str(CardData.Suit.keys()[game_state.active_suit])
 		
 		else:
 			game_state.active_suit = card_to_play.suit
 			
 		if card_to_play.rank == CardData.Rank.TWO:
 			rules.two_is_played(game_state)
-		
+			game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards Player!" 
 		else:
 			game_state.pending_draw_count = 0
 			game_state.active_draw_target = game_state.DrawTarget.NONE
 		
 		if card_to_play.rank == CardData.Rank.JACK:
-			print("Miss a turn player!")
+			game_state.message_to_display = "Miss A Turn Player!"
 			extra_turn = true
 		
 		var card_view := find_cpu_card_view(card_to_play)
-		
-		print("card view ", card_view)
-		print("is queued for deletion ", is_queued_for_deletion())
 
 		if card_view:
 			card_view.show_card(card_to_play)
@@ -351,6 +363,14 @@ func cpu_turn() -> void:
 		display_cpu_hand()
 		display_discard_pile()
 		set_suit_label()
+		
+		if game_state.message_to_display.length() > 0:
+			message_label.text = game_state.message_to_display
+			message_container.visible = true
+			await get_tree().create_timer(2).timeout
+			message_container.visible = false
+			game_state.message_to_display = ""
+		
 	else:
 		if refill_draw_pile():
 			var drawn_card: CardData = deck.draw_card()
@@ -364,7 +384,9 @@ func cpu_turn() -> void:
 
 	if cpu_hand.is_empty():
 		game_state.is_game_over = true
-		print("CPU wins!")
+		game_state.message_to_display = "CPU Wins!"
+		message_label.text = game_state.message_to_display
+		message_container.visible = true
 		return
 	
 	if extra_turn:

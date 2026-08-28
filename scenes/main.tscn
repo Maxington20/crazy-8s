@@ -4,7 +4,19 @@
 [ext_resource type="Texture2D" uid="uid://b4r7gda0roj6g" path="res://art/Crazy8Scene.png" id="2_0wfyh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jvmx5"]
-bg_color = Color(0.6, 0.6, 0.6, 0)
+bg_color = Color(0, 0, 0, 0.7176471)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0wfyh"]
+bg_color = Color(0, 0, 0, 0.8627451)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -101,3 +113,26 @@ text = "CPU Turn"
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Active Suit: Clubs"
+
+[node name="MessageContainer" type="PanelContainer" parent="UI/GameUI" unique_id=163407865]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -82.0
+offset_top = -20.0
+offset_right = 98.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_0wfyh")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/GameUI/MessageContainer" unique_id=1541476189]
+layout_mode = 2
+
+[node name="Message" type="Label" parent="UI/GameUI/MessageContainer/HBoxContainer" unique_id=76423111]
+layout_mode = 2
+size_flags_horizontal = 6
+text = "Player Misses A Turn!"
