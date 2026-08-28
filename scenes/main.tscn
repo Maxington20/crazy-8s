@@ -3,6 +3,18 @@
 [ext_resource type="Script" uid="uid://bk7banx6my7bn" path="res://scenes/main.gd" id="1_o5qli"]
 [ext_resource type="Texture2D" uid="uid://b4r7gda0roj6g" path="res://art/Crazy8Scene.png" id="2_0wfyh"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jvmx5"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [node name="Main" type="Node2D" unique_id=322788313]
 script = ExtResource("1_o5qli")
 
@@ -26,9 +38,9 @@ grow_vertical = 2
 
 [node name="PlayerHand" type="HBoxContainer" parent="UI/GameUI" unique_id=436134558]
 layout_mode = 0
-offset_left = 9.0
+offset_left = 10.0
 offset_top = 282.0
-offset_right = 634.0
+offset_right = 635.0
 offset_bottom = 346.0
 alignment = 1
 
@@ -64,3 +76,28 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="GameStatus" type="PanelContainer" parent="UI/GameUI" unique_id=2004403431]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 20.0
+offset_top = -27.0
+offset_right = 195.0
+offset_bottom = 27.0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_jvmx5")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/GameUI/GameStatus" unique_id=1946408614]
+layout_mode = 2
+
+[node name="TurnDisplay" type="Label" parent="UI/GameUI/GameStatus/VBoxContainer" unique_id=881375593]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "CPU Turn"
+
+[node name="ActiveSuit" type="Label" parent="UI/GameUI/GameStatus/VBoxContainer" unique_id=1627567094]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Active Suit: Clubs"

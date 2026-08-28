@@ -15,9 +15,13 @@ var rules: Crazy8Rules = Crazy8Rules.new()
 @onready var draw_pile_container: Control = $UI/GameUI/DrawPile
 @onready var discard_pile_container: Control = $UI/GameUI/DiscardPile
 @onready var animation_layer: Control = $UI/GameUI/AnimationLayer
+@onready var turn_label: Label = $UI/GameUI/GameStatus/VBoxContainer/TurnDisplay
+@onready var active_suit_label: Label = $UI/GameUI/GameStatus/VBoxContainer/ActiveSuit
+@onready var game_status_box: PanelContainer = $UI/GameUI/GameStatus
 
 
 func _ready() -> void:
+	game_status_box.visible = false
 	deck = Deck.new()
 
 	deck.create_standard_deck()
@@ -26,6 +30,11 @@ func _ready() -> void:
 	await play_opening_deal()
 
 	game_state.is_player_turn = true
+	set_turn_label()
+	
+	set_suit_label()
+	
+	game_status_box.visible = true
 
 
 func play_opening_deal() -> void:
@@ -246,12 +255,13 @@ func _on_player_card_double_clicked(
 		game_state.is_game_over = true
 		print("Player wins!")
 		return
-
-	await get_tree().create_timer(1.0).timeout		
+	
+	set_suit_label()
 	
 	if !extra_turn:
 		await cpu_turn()
 
+		
 
 func _on_draw_pile_card_clicked(
 	_card: CardData
@@ -292,6 +302,8 @@ func cpu_turn() -> void:
 	print("Entered cpu turn")
 	if game_state.is_game_over:
 		return
+	
+	
 	
 	var extra_turn = false
 	
@@ -338,7 +350,7 @@ func cpu_turn() -> void:
 
 		display_cpu_hand()
 		display_discard_pile()
-
+		set_suit_label()
 	else:
 		if refill_draw_pile():
 			var drawn_card: CardData = deck.draw_card()
@@ -360,8 +372,10 @@ func cpu_turn() -> void:
 		await cpu_turn()
 		return
 	
-	await begin_player_turn()
 	game_state.is_player_turn = true
+	
+	await begin_player_turn()
+	
 	
 
 
@@ -466,6 +480,9 @@ func find_cpu_card_view(
 	
 	
 func begin_player_turn() -> void:
+	
+	set_turn_label()
+	
 	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.PLAYER:
 		for card in game_state.pending_draw_count:
 			var drawn_card: CardData = deck.draw_card()
@@ -480,7 +497,10 @@ func begin_player_turn() -> void:
 			await get_tree().create_timer(0.5).timeout
 		
 
-func begin_cpu_turn() -> void:
+func begin_cpu_turn() -> void:	
+	set_turn_label()
+	await get_tree().create_timer(1.5).timeout	
+	
 	# draw cards if 2 was played
 	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.CPU:
 		# draw pending count of cards before playing
@@ -499,3 +519,22 @@ func begin_cpu_turn() -> void:
 	print("finished begin cpu turn")
 		
 		
+
+func set_turn_label() -> void:
+	
+	var label_text: String
+	
+	if game_state.is_player_turn:
+		label_text = "Player Turn"
+	else:
+		label_text = "CPU Turn"
+		
+	turn_label.text = label_text
+
+
+func set_suit_label() -> void:
+	var label_text : String = CardData.Suit.keys()[game_state.active_suit]
+	label_text = label_text.substr(0, 1).to_upper() + label_text.substr(1).to_lower()
+	
+	active_suit_label.text = label_text
+	
