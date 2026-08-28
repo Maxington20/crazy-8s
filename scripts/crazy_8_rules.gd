@@ -17,9 +17,9 @@ func can_play_card(
 func two_is_played(game_state: GameState) -> void:
 	game_state.pending_draw_count += 2
 	if game_state.is_player_turn:
-		game_state.DrawTarget.CPU
+		game_state.active_draw_target = game_state.DrawTarget.CPU
 	else:
-		game_state.DrawTarget.PLAYER
+		game_state.active_draw_target = game_state.DrawTarget.PLAYER
 
 
 func eight_is_played(game_state: GameState, hand: Array[CardData] = []) -> void:

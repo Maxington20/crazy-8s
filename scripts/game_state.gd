@@ -13,3 +13,5 @@ enum DrawTarget{
 	NONE
 }
 	
+
+var active_draw_target: DrawTarget = DrawTarget.NONE

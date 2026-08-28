@@ -224,6 +224,7 @@ func _on_player_card_double_clicked(
 	
 	else:
 		game_state.pending_draw_count = 0
+		game_state.active_draw_target = game_state.DrawTarget.NONE
 	
 	if card.rank == CardData.Rank.JACK:
 		extra_turn = true
@@ -313,6 +314,7 @@ func cpu_turn() -> void:
 		
 		else:
 			game_state.pending_draw_count = 0
+			game_state.active_draw_target = game_state.DrawTarget.NONE
 		
 		if card_to_play.rank == CardData.Rank.JACK:
 			print("Miss a turn player!")
@@ -464,7 +466,7 @@ func find_cpu_card_view(
 	
 	
 func begin_player_turn() -> void:
-	if game_state.pending_draw_count and game_state.DrawTarget.PLAYER:
+	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.PLAYER:
 		for card in game_state.pending_draw_count:
 			var drawn_card: CardData = deck.draw_card()
 
@@ -475,14 +477,12 @@ func begin_player_turn() -> void:
 			display_player_hand()
 			display_draw_pile()
 
-			await get_tree().create_timer(1.0).timeout
-		
-		game_state.DrawTarget.NONE
+			await get_tree().create_timer(0.5).timeout
 		
 
 func begin_cpu_turn() -> void:
 	# draw cards if 2 was played
-	if game_state.pending_draw_count and game_state.DrawTarget.CPU:
+	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.CPU:
 		# draw pending count of cards before playing
 		for count in game_state.pending_draw_count:
 			if refill_draw_pile():
@@ -495,7 +495,7 @@ func begin_cpu_turn() -> void:
 				display_cpu_hand()
 				display_draw_pile()
 				
-				await get_tree().create_timer(1.0).timeout
+				await get_tree().create_timer(0.5).timeout
 	print("finished begin cpu turn")
 		
 		
