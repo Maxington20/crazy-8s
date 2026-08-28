@@ -95,9 +95,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 20.0
-offset_top = -27.0
-offset_right = 195.0
-offset_bottom = 27.0
+offset_top = -21.0
+offset_right = 170.0
+offset_bottom = 21.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_jvmx5")
 
@@ -107,11 +107,13 @@ layout_mode = 2
 [node name="TurnDisplay" type="Label" parent="UI/GameUI/GameStatus/VBoxContainer" unique_id=881375593]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 12
 text = "CPU Turn"
 
 [node name="ActiveSuit" type="Label" parent="UI/GameUI/GameStatus/VBoxContainer" unique_id=1627567094]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 12
 text = "Active Suit: Clubs"
 
 [node name="MessageContainer" type="PanelContainer" parent="UI/GameUI" unique_id=163407865]
@@ -135,4 +137,5 @@ layout_mode = 2
 [node name="Message" type="Label" parent="UI/GameUI/MessageContainer/HBoxContainer" unique_id=76423111]
 layout_mode = 2
 size_flags_horizontal = 6
+theme_override_font_sizes/font_size = 12
 text = "Player Misses A Turn!"
