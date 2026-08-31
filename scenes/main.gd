@@ -21,7 +21,6 @@ var rules: Crazy8Rules = Crazy8Rules.new()
 @onready var message_label : Label = $UI/GameUI/MessageContainer/HBoxContainer/Message
 @onready var message_container: PanelContainer = $UI/GameUI/MessageContainer
 
-
 func _ready() -> void:
 	game_status_box.visible = false
 	message_container.visible = false 
@@ -342,6 +341,7 @@ func cpu_turn() -> void:
 		
 		else:
 			game_state.active_suit = card_to_play.suit
+			game_state.active_rank = card_to_play.rank
 			
 		if card_to_play.rank == CardData.Rank.TWO:
 			rules.two_is_played(game_state)

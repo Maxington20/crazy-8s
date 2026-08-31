@@ -4,6 +4,7 @@ extends RefCounted
 var pending_draw_count: int = 0
 #var draw_target_is_player: bool = false
 var active_suit: CardData.Suit
+var active_rank: CardData.Rank
 var is_player_turn: bool = true
 var is_game_over: bool = false
 
