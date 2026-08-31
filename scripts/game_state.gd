@@ -17,3 +17,4 @@ enum DrawTarget{
 
 var active_draw_target: DrawTarget = DrawTarget.NONE
 var message_to_display: String
+var is_choosing_suit: bool = false

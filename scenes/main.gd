@@ -20,10 +20,15 @@ var rules: Crazy8Rules = Crazy8Rules.new()
 @onready var game_status_box: PanelContainer = $UI/GameUI/GameStatus
 @onready var message_label : Label = $UI/GameUI/MessageContainer/HBoxContainer/Message
 @onready var message_container: PanelContainer = $UI/GameUI/MessageContainer
+@onready var suit_selector_container: PanelContainer = $UI/GameUI/SuitSelector
+
+
+signal suit_selected(suit: CardData.Suit)
 
 func _ready() -> void:
 	game_status_box.visible = false
 	message_container.visible = false 
+	suit_selector_container.visible = false
 	deck = Deck.new()
 
 	deck.create_standard_deck()
@@ -212,7 +217,7 @@ func _on_player_card_double_clicked(
 	card_view: CardView,
 	card: CardData
 ) -> void:
-	if !game_state.is_player_turn or game_state.is_game_over:
+	if !game_state.is_player_turn or game_state.is_game_over or game_state.is_choosing_suit:
 		return
 	
 	var top_card: CardData = discard_pile.back()
@@ -225,7 +230,9 @@ func _on_player_card_double_clicked(
 	if card.rank == CardData.Rank.EIGHT:
 		rules.eight_is_played(game_state)
 		# remove below after suit selectin for player complete
-		game_state.active_suit = card.suit
+		suit_selector_container.visible = true
+		var suit = await suit_selected
+		game_state.message_to_display = "Player changed it to " + CardData.Suit.keys()[suit]
 	
 	else:
 		game_state.active_suit = card.suit
@@ -287,7 +294,7 @@ func _on_player_card_double_clicked(
 func _on_draw_pile_card_clicked(
 	_card: CardData
 ) -> void:
-	if !game_state	.is_player_turn or game_state.is_game_over:
+	if !game_state	.is_player_turn or game_state.is_game_over or game_state.is_choosing_suit:
 		return
 
 	if !refill_draw_pile():
@@ -576,3 +583,27 @@ func set_suit_label() -> void:
 	
 	active_suit_label.text = label_text
 	
+
+
+func _on_spades_pressed() -> void:
+	game_state.active_suit = CardData.Suit.SPADES
+	suit_selected.emit(CardData.Suit.SPADES)
+	suit_selector_container.visible = false
+	
+
+func _on_clubs_pressed() -> void:
+	game_state.active_suit = CardData.Suit.CLUBS
+	suit_selected.emit(CardData.Suit.CLUBS)
+	suit_selector_container.visible = false
+	
+
+func _on_diamonds_pressed() -> void:
+	game_state.active_suit = CardData.Suit.DIAMONDS
+	suit_selected.emit(CardData.Suit.DIAMONDS)
+	suit_selector_container.visible = false
+
+
+func _on_hearts_pressed() -> void:
+	game_state.active_suit = CardData.Suit.HEARTS
+	suit_selected.emit(CardData.Suit.HEARTS)
+	suit_selector_container.visible = false

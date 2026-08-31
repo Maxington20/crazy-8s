@@ -29,8 +29,6 @@ func eight_is_played(game_state: GameState, hand: Array[CardData] = []) -> void:
 		var suit_to_pick = get_most_common_suit(hand)
 		game_state.active_suit = suit_to_pick
 		print("cpu changed suit to ", CardData.Suit.keys()[suit_to_pick])
-	else:
-		print("player played an eight! weeee")
 
 
 func get_most_common_suit(hand: Array[CardData]) -> CardData.Suit:
