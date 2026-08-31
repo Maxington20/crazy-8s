@@ -152,6 +152,9 @@ func deal_starting_discard() -> void:
 
 
 func display_player_hand() -> void:
+	
+	adjust_card_separation(player_hand, true)
+	
 	for child in player_hand_container.get_children():
 		child.queue_free()
 
@@ -168,6 +171,9 @@ func display_player_hand() -> void:
 
 
 func display_cpu_hand() -> void:
+	
+	adjust_card_separation(cpu_hand, false)
+	
 	for child in cpu_hand_container.get_children():
 		child.queue_free()
 
@@ -583,6 +589,24 @@ func set_suit_label() -> void:
 	
 	active_suit_label.text = label_text
 	
+
+func adjust_card_separation(hand: Array[CardData], is_player_hand: bool) -> void:
+	var normal_separation = 4
+	if hand.size() > 12:	
+		var separation = (605 - hand.size() * 48) / (hand.size() - 1)
+		
+		if is_player_hand:
+			player_hand_container.add_theme_constant_override("separation", separation)
+			
+		else:
+			cpu_hand_container.add_theme_constant_override("separation", separation)
+	
+	else:
+		if is_player_hand:
+			player_hand_container.add_theme_constant_override("separation", normal_separation)
+			
+		else:
+			cpu_hand_container.add_theme_constant_override("separation", normal_separation)
 
 
 func _on_spades_pressed() -> void:
