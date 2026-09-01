@@ -667,9 +667,9 @@ func populate_discard_pile_visuals() -> float:
 	for i in discard_pile.size() -1:
 		var visual := TextureRect.new()
 		if i % 2 == 0:
-			visual.texture = CARD_FRONT_TEXTURE
+			visual.texture = CARD_FRONT_TEXTURE_DARK	
 		else:
-			visual.texture = CARD_FRONT_TEXTURE_DARK
+			visual.texture = CARD_FRONT_TEXTURE
 		
 		visual.size = Vector2(48, 64)
 		visual.position = Vector2(offset, offset)
