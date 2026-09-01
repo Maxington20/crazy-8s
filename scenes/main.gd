@@ -2,6 +2,10 @@ extends Node2D
 
 const STARTING_HAND_SIZE := 7
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
+const CARD_BACK_TEXTURE := preload("res://art/CardBack.png")
+const CARD_BACK_DARK_TEXTURE := preload("res://art/CardBackDark.png")
+const CARD_FRONT_TEXTURE := preload("res://art/CardFrontStock.png")
+const CARD_FRONT_TEXTURE_DARK := preload("res://art/CardFrontStockDark.png")
 
 var deck: Deck
 var player_hand: Array[CardData] = []
@@ -191,9 +195,13 @@ func display_draw_pile() -> void:
 
 	#if deck.cards.is_empty():
 		#return
-
+	
+	var offset = populate_draw_pile_visuals()
+	
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
-
+	
+	card_view.position = Vector2(offset, offset)
+	
 	draw_pile_container.add_child(card_view)
 
 	card_view.show_back()
@@ -210,8 +218,12 @@ func display_discard_pile() -> void:
 	if discard_pile.is_empty():
 		return
 
-	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
+	var offset = populate_discard_pile_visuals()
 
+	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
+	
+	card_view.position = Vector2(offset, offset)
+	
 	discard_pile_container.add_child(card_view)
 
 	var top_card: CardData = discard_pile.back()
@@ -631,3 +643,36 @@ func _on_hearts_pressed() -> void:
 	game_state.active_suit = CardData.Suit.HEARTS
 	suit_selected.emit(CardData.Suit.HEARTS)
 	suit_selector_container.visible = false
+	
+	
+	
+func populate_draw_pile_visuals() -> float:
+	var offset = 0
+	for i in deck.cards.size() - 1:
+		var visual := TextureRect.new()
+		if i % 2 == 0:
+			visual.texture = CARD_BACK_TEXTURE
+		else:
+			visual.texture = CARD_BACK_DARK_TEXTURE
+		
+		visual.size = Vector2(48, 64)
+		visual.position = Vector2(offset, offset)
+		draw_pile_container.add_child(visual)
+		offset += 0.2
+	return offset
+		
+		
+func populate_discard_pile_visuals() -> float:
+	var offset = 0
+	for i in discard_pile.size() -1:
+		var visual := TextureRect.new()
+		if i % 2 == 0:
+			visual.texture = CARD_FRONT_TEXTURE
+		else:
+			visual.texture = CARD_FRONT_TEXTURE_DARK
+		
+		visual.size = Vector2(48, 64)
+		visual.position = Vector2(offset, offset)
+		discard_pile_container.add_child(visual)
+		offset += 0.2
+	return offset

@@ -89,21 +89,19 @@ offset_right = 633.0
 offset_bottom = 74.0
 alignment = 1
 
-[node name="DrawPile" type="HBoxContainer" parent="UI/GameUI" unique_id=1885922967]
-layout_mode = 0
+[node name="DrawPile" type="Control" parent="UI/GameUI" unique_id=596533882]
+anchors_preset = 0
 offset_left = 259.0
 offset_top = 146.0
 offset_right = 307.0
 offset_bottom = 210.0
-alignment = 1
 
-[node name="DiscardPile" type="HBoxContainer" parent="UI/GameUI" unique_id=542192596]
-layout_mode = 0
+[node name="DiscardPile" type="Control" parent="UI/GameUI" unique_id=2087215441]
+anchors_preset = 0
 offset_left = 339.0
 offset_top = 146.0
 offset_right = 387.0
 offset_bottom = 210.0
-alignment = 1
 
 [node name="AnimationLayer" type="Control" parent="UI/GameUI" unique_id=1131905531]
 layout_mode = 1
