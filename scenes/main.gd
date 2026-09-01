@@ -7,12 +7,9 @@ const CARD_BACK_DARK_TEXTURE := preload("res://art/CardBackDark.png")
 const CARD_FRONT_TEXTURE := preload("res://art/CardFrontStock.png")
 const CARD_FRONT_TEXTURE_DARK := preload("res://art/CardFrontStockDark.png")
 
-var deck: Deck
-var player_hand: Array[CardData] = []
-var cpu_hand: Array[CardData] = []
-var discard_pile: Array[CardData] = []
+
 var game_state: GameState = GameState.new()
-var rules: Crazy8Rules = Crazy8Rules.new()
+
 
 @onready var player_hand_container: HBoxContainer = $UI/GameUI/PlayerHand
 @onready var cpu_hand_container: HBoxContainer = $UI/GameUI/CpuHand
@@ -33,10 +30,10 @@ func _ready() -> void:
 	game_status_box.visible = false
 	message_container.visible = false 
 	suit_selector_container.visible = false
-	deck = Deck.new()
+	game_state.deck = Deck.new()
 
-	deck.create_standard_deck()
-	deck.shuffle()
+	game_state.deck.create_standard_deck()
+	game_state.deck.shuffle()
 
 	await play_opening_deal()
 	
@@ -92,7 +89,7 @@ func create_deck_view() -> CardView:
 
 func deal_starting_hands_from(deck_view: CardView) -> void:
 	for i in STARTING_HAND_SIZE:
-		var player_card: CardData = deck.draw_card()
+		var player_card: CardData = game_state.deck.draw_card()
 
 		await animate_deal_card(
 			player_card,
@@ -100,12 +97,12 @@ func deal_starting_hands_from(deck_view: CardView) -> void:
 			get_player_draw_target()
 		)
 
-		player_hand.append(player_card)
+		game_state.player_hand.append(player_card)
 		display_player_hand()
 
 		await get_tree().create_timer(0.08).timeout
 
-		var cpu_card: CardData = deck.draw_card()
+		var cpu_card: CardData = game_state.deck.draw_card()
 
 		await animate_deal_card(
 			cpu_card,
@@ -113,7 +110,7 @@ func deal_starting_hands_from(deck_view: CardView) -> void:
 			get_cpu_draw_target()
 		)
 
-		cpu_hand.append(cpu_card)
+		game_state.cpu_hand.append(cpu_card)
 		display_cpu_hand()
 
 		await get_tree().create_timer(0.08).timeout
@@ -140,7 +137,7 @@ func animate_deal_card(
 
 
 func deal_starting_discard() -> void:
-	var starting_card: CardData = deck.draw_card()
+	var starting_card: CardData = game_state.deck.draw_card()
 
 	var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
@@ -156,7 +153,7 @@ func deal_starting_discard() -> void:
 
 	card_view.show_card(starting_card)
 
-	discard_pile.append(starting_card)
+	game_state.discard_pile.append(starting_card)
 
 	await get_tree().create_timer(0.2).timeout
 
@@ -169,24 +166,24 @@ func deal_starting_discard() -> void:
 
 func display_player_hand() -> void:
 	
-	adjust_card_separation(player_hand, true)
+	adjust_card_separation(game_state.player_hand, true)
 	
 	for child in player_hand_container.get_children():
 		child.queue_free()
 
 	sort_player_hand()
 
-	for card in player_hand:
+	for card in game_state.player_hand:
 		var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 		
 		player_hand_container.add_child(card_view)
 		
 		card_view.show_card(card)			
 		
-		if discard_pile.size() > 0:
+		if game_state.discard_pile.size() > 0:
 		
-			var playable := rules.can_play_card(
-				card, discard_pile.back(),
+			var playable := game_state.rules.can_play_card(
+				card, game_state.discard_pile.back(),
 				game_state
 			)
 		
@@ -199,12 +196,12 @@ func display_player_hand() -> void:
 
 func display_cpu_hand() -> void:
 	
-	adjust_card_separation(cpu_hand, false)
+	adjust_card_separation(game_state.cpu_hand, false)
 	
 	for child in cpu_hand_container.get_children():
 		child.queue_free()
 
-	for card in cpu_hand:
+	for card in game_state.cpu_hand:
 		var card_view: CardView = CARD_VIEW_SCENE.instantiate()
 
 		cpu_hand_container.add_child(card_view)
@@ -238,7 +235,7 @@ func display_discard_pile() -> void:
 	for child in discard_pile_container.get_children():
 		child.queue_free()
 
-	if discard_pile.is_empty():
+	if game_state.discard_pile.is_empty():
 		return
 
 	var offset = populate_discard_pile_visuals()
@@ -249,7 +246,7 @@ func display_discard_pile() -> void:
 	
 	discard_pile_container.add_child(card_view)
 
-	var top_card: CardData = discard_pile.back()
+	var top_card: CardData = game_state.discard_pile.back()
 
 	card_view.show_card(top_card)
 	
@@ -261,15 +258,15 @@ func _on_player_card_double_clicked(
 	if !game_state.is_player_turn or game_state.is_game_over or game_state.is_choosing_suit:
 		return
 	
-	var top_card: CardData = discard_pile.back()
+	var top_card: CardData = game_state.discard_pile.back()
 	var extra_turn: bool = false
 	
-	if !rules.can_play_card(card, top_card, game_state):
+	if !game_state.rules.can_play_card(card, top_card, game_state):
 		return
 	
 	# check for special cards
 	if card.rank == CardData.Rank.EIGHT:
-		rules.eight_is_played(game_state)
+		game_state.rules.eight_is_played(game_state)
 		# remove below after suit selectin for player complete
 		game_state.is_choosing_suit = true
 		suit_selector_container.visible = true
@@ -281,7 +278,7 @@ func _on_player_card_double_clicked(
 		game_state.active_suit = card.suit
 		
 	if card.rank == CardData.Rank.TWO:
-		rules.two_is_played(game_state)		
+		game_state.rules.two_is_played(game_state)		
 		game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards CPU!"
 	else:
 		game_state.pending_draw_count = 0
@@ -296,8 +293,8 @@ func _on_player_card_double_clicked(
 
 	await animate_card_to_discard(card_view)
 
-	player_hand.erase(card)
-	discard_pile.append(card)
+	game_state.player_hand.erase(card)
+	game_state.discard_pile.append(card)
 
 	card_view.queue_free()
 
@@ -308,12 +305,12 @@ func _on_player_card_double_clicked(
 		await show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 			
-	if player_hand.size() == 1:
+	if game_state.player_hand.size() == 1:
 		game_state.message_to_display = "Knock Knock, Last Card!"
 		await show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 	
-	if player_hand.is_empty():
+	if game_state.player_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "Player Wins!"
 		await show_message(game_state.message_to_display, false)
@@ -338,11 +335,11 @@ func _on_draw_pile_card_clicked(
 	game_state.active_draw_target = game_state.DrawTarget.NONE
 	game_state.is_player_turn = false
 
-	var drawn_card: CardData = deck.draw_card()
+	var drawn_card: CardData = game_state.deck.draw_card()
 
 	await animate_draw_to_player(drawn_card)
 
-	player_hand.append(drawn_card)
+	game_state.player_hand.append(drawn_card)
 
 	display_player_hand()
 	display_draw_pile()
@@ -350,16 +347,6 @@ func _on_draw_pile_card_clicked(
 	await get_tree().create_timer(1.0).timeout
 	
 	await cpu_turn()
-
-
-func find_cpu_playable_card() -> CardData:
-	var top_card: CardData = discard_pile.back()
-
-	for card in cpu_hand:
-		if rules.can_play_card(card, top_card, game_state):
-			return card
-
-	return null
 
 
 func cpu_turn() -> void:
@@ -371,21 +358,19 @@ func cpu_turn() -> void:
 	
 	await begin_cpu_turn()
 	
-	var card_to_play := find_cpu_playable_card()
-	
-	print("card to play ", card_to_play)
-	
+	var card_to_play := game_state.cpu_strategy.find_cpu_playable_card(game_state)
+		
 	if card_to_play:
 		
 		if card_to_play.rank == CardData.Rank.EIGHT:
-			rules.eight_is_played(game_state, cpu_hand)
+			game_state.rules.eight_is_played(game_state, game_state.cpu_hand)
 			game_state.message_to_display = "CPU Changed Suit To " + str(CardData.Suit.keys()[game_state.active_suit])
 		
 		else:
 			game_state.active_suit = card_to_play.suit
 			
 		if card_to_play.rank == CardData.Rank.TWO:
-			rules.two_is_played(game_state)
+			game_state.rules.two_is_played(game_state)
 			game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards Player!" 
 		else:
 			game_state.pending_draw_count = 0
@@ -402,8 +387,8 @@ func cpu_turn() -> void:
 
 			await animate_card_to_discard(card_view)
 
-		cpu_hand.erase(card_to_play)
-		discard_pile.append(card_to_play)
+		game_state.cpu_hand.erase(card_to_play)
+		game_state.discard_pile.append(card_to_play)
 
 		if card_view:
 			card_view.queue_free()
@@ -418,21 +403,21 @@ func cpu_turn() -> void:
 		
 	else:
 		if refill_draw_pile():
-			var drawn_card: CardData = deck.draw_card()
+			var drawn_card: CardData = game_state.deck.draw_card()
 
 			await animate_draw_to_cpu(drawn_card)
 			game_state.active_draw_target = game_state.DrawTarget.NONE
-			cpu_hand.append(drawn_card)
+			game_state.cpu_hand.append(drawn_card)
 
 			display_cpu_hand()
 			display_draw_pile()
 	
-	if cpu_hand.size() == 1:
+	if game_state.cpu_hand.size() == 1:
 		game_state.message_to_display = "Knock Knock, Last Card!"
 		await show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 	
-	if cpu_hand.is_empty():
+	if game_state.cpu_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "CPU Wins!"
 		await show_message(game_state.message_to_display, false)
@@ -451,21 +436,21 @@ func cpu_turn() -> void:
 
 
 func refill_draw_pile() -> bool:
-	if !deck.cards.is_empty():
+	if !game_state.deck.cards.is_empty():
 		return true
 
-	if discard_pile.size() <= 1:
+	if game_state.discard_pile.size() <= 1:
 		return false
 
-	var top_card: CardData = discard_pile.pop_back()
+	var top_card: CardData = game_state.discard_pile.pop_back()
 
-	for card in discard_pile:
-		deck.cards.append(card)
+	for card in game_state.discard_pile:
+		game_state.deck.cards.append(card)
 
-	discard_pile.clear()
-	discard_pile.append(top_card)
+	game_state.discard_pile.clear()
+	game_state.discard_pile.append(top_card)
 
-	deck.shuffle()
+	game_state.deck.shuffle()
 
 	display_draw_pile()
 
@@ -529,7 +514,7 @@ func animate_draw_to_cpu(
 
 
 func get_player_draw_target() -> Vector2:
-	var card_count := player_hand.size()
+	var card_count := game_state.player_hand.size()
 
 	return player_hand_container.global_position + Vector2(
 		card_count * 48,
@@ -538,7 +523,7 @@ func get_player_draw_target() -> Vector2:
 
 
 func get_cpu_draw_target() -> Vector2:
-	var card_count := cpu_hand.size()
+	var card_count := game_state.cpu_hand.size()
 
 	return cpu_hand_container.global_position + Vector2(
 		card_count * 48,
@@ -564,11 +549,11 @@ func begin_player_turn() -> void:
 	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.PLAYER:
 		for card in game_state.pending_draw_count:
 			if refill_draw_pile():
-				var drawn_card: CardData = deck.draw_card()
+				var drawn_card: CardData = game_state.deck.draw_card()
 
 				await animate_draw_to_player(drawn_card)
 
-				player_hand.append(drawn_card)
+				game_state.player_hand.append(drawn_card)
 
 				display_player_hand()
 				display_draw_pile()
@@ -585,11 +570,11 @@ func begin_cpu_turn() -> void:
 		# draw pending count of cards before playing
 		for count in game_state.pending_draw_count:
 			if refill_draw_pile():
-				var drawn_card: CardData = deck.draw_card()
+				var drawn_card: CardData = game_state.deck.draw_card()
 
 				await animate_draw_to_cpu(drawn_card)
 
-				cpu_hand.append(drawn_card)
+				game_state.cpu_hand.append(drawn_card)
 
 				display_cpu_hand()
 				display_draw_pile()
@@ -663,7 +648,7 @@ func _on_hearts_pressed() -> void:
 	
 func populate_draw_pile_visuals() -> float:
 	var offset = 0
-	for i in deck.cards.size() - 1:
+	for i in game_state.deck.cards.size() - 1:
 		var visual := TextureRect.new()
 		if i % 2 == 0:
 			visual.texture = CARD_BACK_TEXTURE
@@ -679,7 +664,7 @@ func populate_draw_pile_visuals() -> float:
 		
 func populate_discard_pile_visuals() -> float:
 	var offset = 0
-	for i in discard_pile.size() -1:
+	for i in game_state.discard_pile.size() -1:
 		var visual := TextureRect.new()
 		if i % 2 == 0:
 			visual.texture = CARD_FRONT_TEXTURE_DARK	
@@ -708,7 +693,7 @@ func compare_cards(a: CardData, b: CardData) -> bool:
 		
 
 func sort_player_hand() -> void:
-	player_hand.sort_custom(compare_cards)
+	game_state.player_hand.sort_custom(compare_cards)
 	
 	
 func show_message(message: String, hide_after_wait: bool = true) -> void:
