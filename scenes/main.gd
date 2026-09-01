@@ -155,12 +155,14 @@ func deal_starting_discard() -> void:
 	game_state.active_suit = starting_card.suit
 
 
-func display_player_hand() -> void:
+func display_player_hand(sort_by_suit: bool = true) -> void:
 	
 	adjust_card_separation(player_hand, true)
 	
 	for child in player_hand_container.get_children():
 		child.queue_free()
+
+	sort_player_hand()
 
 	for card in player_hand:
 		var card_view: CardView = CARD_VIEW_SCENE.instantiate()
@@ -487,11 +489,17 @@ func animate_draw_to_player(
 	card_view.show_back(card)
 
 	card_view.global_position = draw_pile_container.global_position
-
-	await card_view.move_to(
-		get_player_draw_target()
-	)
-
+	
+	var target_positioin = get_player_draw_target()
+	
+	var halfway_point = card_view.global_position.lerp(target_positioin, 0.5)
+	
+	await card_view.move_to(halfway_point)
+	
+	card_view.show_card(card)
+	
+	await card_view.move_to(target_positioin)
+	
 	card_view.queue_free()
 
 
@@ -676,3 +684,21 @@ func populate_discard_pile_visuals() -> float:
 		discard_pile_container.add_child(visual)
 		offset += 0.2
 	return offset
+
+
+func compare_cards(a: CardData, b: CardData) -> bool:
+	if a.suit < b.suit:
+		return true
+		
+	elif a.suit == b.suit:
+		if(a.rank < b.rank):
+			return true
+		else:
+			return false
+	
+	else:
+		return false
+		
+
+func sort_player_hand() -> void:
+	player_hand.sort_custom(compare_cards)
