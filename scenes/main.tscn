@@ -90,18 +90,33 @@ offset_bottom = 74.0
 alignment = 1
 
 [node name="DrawPile" type="Control" parent="UI/GameUI" unique_id=596533882]
-anchors_preset = 0
-offset_left = 259.0
-offset_top = 146.0
-offset_right = 307.0
-offset_bottom = 210.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -61.0
+offset_top = -32.0
+offset_right = -13.0
+offset_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DiscardPile" type="Control" parent="UI/GameUI" unique_id=2087215441]
-anchors_preset = 0
-offset_left = 339.0
-offset_top = 146.0
-offset_right = 387.0
-offset_bottom = 210.0
+custom_minimum_size = Vector2(48, 64)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 24.0
+offset_top = -32.0
+offset_right = 72.0
+offset_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="AnimationLayer" type="Control" parent="UI/GameUI" unique_id=1131905531]
 layout_mode = 1
