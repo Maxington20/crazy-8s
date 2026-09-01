@@ -82,3 +82,10 @@ func move_to(
 	)
 
 	await tween.finished
+	
+	
+func set_playable(playable: bool) -> void:
+	if playable:
+		card_image.position.y = -10
+	else:
+		card_image.position.y = 0

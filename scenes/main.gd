@@ -39,13 +39,23 @@ func _ready() -> void:
 	deck.shuffle()
 
 	await play_opening_deal()
-
-	game_state.is_player_turn = true
+	
+	var num = randf()
+	
+	if num >= 0.5:
+		game_state.is_player_turn = true
+	else:
+		game_state.is_player_turn = false
+		
+		
 	set_turn_label()
 	
 	set_suit_label()
 	
 	game_status_box.visible = true
+	
+	if game_state.is_player_turn == false:
+		await cpu_turn()
 
 
 func play_opening_deal() -> void:
@@ -63,6 +73,8 @@ func play_opening_deal() -> void:
 	deck_view.queue_free()
 
 	display_draw_pile()
+	
+	display_player_hand()
 
 
 func create_deck_view() -> CardView:
@@ -166,11 +178,20 @@ func display_player_hand(sort_by_suit: bool = true) -> void:
 
 	for card in player_hand:
 		var card_view: CardView = CARD_VIEW_SCENE.instantiate()
-
+		
 		player_hand_container.add_child(card_view)
-
-		card_view.show_card(card)
-
+		
+		card_view.show_card(card)			
+		
+		if discard_pile.size() > 0:
+		
+			var playable := rules.can_play_card(
+				card, discard_pile.back(),
+				game_state
+			)
+		
+			card_view.set_playable(playable)
+		
 		card_view.card_double_clicked.connect(
 			_on_player_card_double_clicked
 		)
@@ -231,7 +252,7 @@ func display_discard_pile() -> void:
 	var top_card: CardData = discard_pile.back()
 
 	card_view.show_card(top_card)
-
+	
 
 func _on_player_card_double_clicked(
 	card_view: CardView,
@@ -552,6 +573,7 @@ func find_cpu_card_view(
 func begin_player_turn() -> void:
 	
 	set_turn_label()
+	display_player_hand()
 	
 	if game_state.pending_draw_count and game_state.active_draw_target == game_state.DrawTarget.PLAYER:
 		for card in game_state.pending_draw_count:
@@ -587,7 +609,6 @@ func begin_cpu_turn() -> void:
 				display_draw_pile()
 				
 				await get_tree().create_timer(0.5).timeout
-	print("finished begin cpu turn")
 		
 		
 
