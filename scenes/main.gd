@@ -8,6 +8,7 @@ const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
 var game_state: GameState = GameState.new()
 
 signal suit_selected(suit: CardData.Suit)
+signal game_started()
 
 func _ready() -> void:
 	game_view.initialize(game_state)
@@ -18,6 +19,10 @@ func _ready() -> void:
 	game_view.game_status_box.visible = false
 	game_view.message_container.visible = false 
 	game_view.suit_selector_container.visible = false
+	game_view.main_menu_container.visible = true
+	
+	await game_started
+	
 	game_state.deck = Deck.new()
 
 	game_state.deck.create_standard_deck()
@@ -190,7 +195,8 @@ func _on_player_card_double_clicked(
 	if game_state.player_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "Player Wins!"
-		await game_view.show_message(game_state.message_to_display, false)
+		await game_view.show_message(game_state.message_to_display, true)
+		get_tree().reload_current_scene()
 		return
 	
 	game_view.set_suit_label()
@@ -227,7 +233,6 @@ func _on_draw_pile_card_clicked(
 
 
 func cpu_turn() -> void:
-	print("Entered cpu turn")
 	if game_state.is_game_over:
 		return
 	
@@ -297,7 +302,8 @@ func cpu_turn() -> void:
 	if game_state.cpu_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "CPU Wins!"
-		await game_view.show_message(game_state.message_to_display, false)
+		await game_view.show_message(game_state.message_to_display, true)
+		get_tree().reload_current_scene()
 		return
 	
 	if extra_turn:
@@ -481,3 +487,8 @@ func _on_hearts_pressed() -> void:
 	game_state.active_suit = CardData.Suit.HEARTS
 	suit_selected.emit(CardData.Suit.HEARTS)
 	game_view.suit_selector_container.visible = false
+
+
+func _on_play_pressed() -> void:
+	game_view.main_menu_container.visible = false
+	game_started.emit()

@@ -19,6 +19,7 @@ const CARD_FRONT_TEXTURE_DARK := preload("res://art/CardFrontStockDark.png")
 @onready var message_label : Label = $UI/GameUI/MessageContainer/HBoxContainer/Message
 @onready var message_container: PanelContainer = $UI/GameUI/MessageContainer
 @onready var suit_selector_container: PanelContainer = $UI/GameUI/SuitSelector
+@onready var main_menu_container: Panel = $UI/GameUI/MainMenuContainer
 
 signal draw_pile_clicked(card: CardData)
 signal player_card_double_clicked(card_view: CardView, card: CardData)
@@ -41,9 +42,6 @@ func create_deck_view() -> CardView:
 
 	animation_layer.add_child(deck_view)
 	deck_view.show_back()
-
-	# Starting position of the deck before dealing.
-	# Adjust this if you want the dealer deck somewhere else.
 	deck_view.global_position = Vector2(296, 148)
 
 	return deck_view
