@@ -167,7 +167,7 @@ func deal_starting_discard() -> void:
 	game_state.active_suit = starting_card.suit
 
 
-func display_player_hand(sort_by_suit: bool = true) -> void:
+func display_player_hand() -> void:
 	
 	adjust_card_separation(player_hand, true)
 	
@@ -271,8 +271,10 @@ func _on_player_card_double_clicked(
 	if card.rank == CardData.Rank.EIGHT:
 		rules.eight_is_played(game_state)
 		# remove below after suit selectin for player complete
+		game_state.is_choosing_suit = true
 		suit_selector_container.visible = true
 		var suit = await suit_selected
+		game_state.is_choosing_suit = false
 		game_state.message_to_display = "Player changed it to " + CardData.Suit.keys()[suit]
 	
 	else:
@@ -389,7 +391,6 @@ func cpu_turn() -> void:
 		
 		else:
 			game_state.active_suit = card_to_play.suit
-			game_state.active_rank = card_to_play.rank
 			
 		if card_to_play.rank == CardData.Rank.TWO:
 			rules.two_is_played(game_state)
