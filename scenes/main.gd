@@ -305,26 +305,18 @@ func _on_player_card_double_clicked(
 	display_discard_pile()
 	
 	if game_state.message_to_display.length() > 0:
-			message_label.text = game_state.message_to_display
-			message_container.visible = true
-			await get_tree().create_timer(2).timeout
-			message_container.visible = false
-			game_state.message_to_display = ""
+		await show_message(game_state.message_to_display)
+		game_state.message_to_display = ""
 			
 	if player_hand.size() == 1:
 		game_state.message_to_display = "Knock Knock, Last Card!"
-		message_label.text = game_state.message_to_display
-		message_container.visible = true
-		await get_tree().create_timer(2).timeout
-		message_container.visible = false
+		await show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 	
 	if player_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "Player Wins!"
-		message_label.text = game_state.message_to_display
-		message_container.visible = true
-		print("Player wins!")
+		await show_message(game_state.message_to_display, false)
 		return
 	
 	set_suit_label()
@@ -421,10 +413,7 @@ func cpu_turn() -> void:
 		set_suit_label()
 		
 		if game_state.message_to_display.length() > 0:
-			message_label.text = game_state.message_to_display
-			message_container.visible = true
-			await get_tree().create_timer(2).timeout
-			message_container.visible = false
+			await show_message(game_state.message_to_display)
 			game_state.message_to_display = ""
 		
 	else:
@@ -440,17 +429,13 @@ func cpu_turn() -> void:
 	
 	if cpu_hand.size() == 1:
 		game_state.message_to_display = "Knock Knock, Last Card!"
-		message_label.text = game_state.message_to_display
-		message_container.visible = true
-		await get_tree().create_timer(2).timeout
-		message_container.visible = false
+		await show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 	
 	if cpu_hand.is_empty():
 		game_state.is_game_over = true
 		game_state.message_to_display = "CPU Wins!"
-		message_label.text = game_state.message_to_display
-		message_container.visible = true
+		await show_message(game_state.message_to_display, false)
 		return
 	
 	if extra_turn:
@@ -724,3 +709,11 @@ func compare_cards(a: CardData, b: CardData) -> bool:
 
 func sort_player_hand() -> void:
 	player_hand.sort_custom(compare_cards)
+	
+	
+func show_message(message: String, hide_after_wait: bool = true) -> void:
+	message_label.text = message
+	message_container.visible = true
+	if hide_after_wait:
+		await get_tree().create_timer(2).timeout
+		message_container.visible = false
