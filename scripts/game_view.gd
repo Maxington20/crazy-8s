@@ -59,7 +59,10 @@ func animate_deal_card(
 
 	card_view.show_back(card)
 	card_view.global_position = start_position
-
+	
+	var sound_timer := get_tree().create_timer(0.08)
+	sound_timer.timeout.connect(SoundManager.play_card)
+	
 	await card_view.move_to(
 		target_position,
 		0.25

@@ -30,6 +30,18 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m0q3i"]
+bg_color = Color(0.039215688, 0.05490196, 0.023529412, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ljn2g"]
 bg_color = Color(0, 0, 0, 0.8235294)
 border_width_left = 2
@@ -162,18 +174,6 @@ corner_radius_bottom_left = 5
 shadow_color = Color(0.6745098, 0.19215687, 0.19215687, 1)
 shadow_size = 2
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m0q3i"]
-bg_color = Color(0.039215688, 0.05490196, 0.023529412, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
 [node name="Main" type="Node2D" unique_id=322788313]
 script = ExtResource("1_o5qli")
 
@@ -303,6 +303,26 @@ size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 12
 text = "Player Misses A Turn!"
 
+[node name="EndTurnButtonContainer" type="PanelContainer" parent="GameView/UI/GameUI" unique_id=574502807]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -28.5
+offset_top = -136.0
+offset_right = 36.5
+offset_bottom = -96.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Button" type="Button" parent="GameView/UI/GameUI/EndTurnButtonContainer" unique_id=533665281]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_m0q3i")
+text = "End Turn"
+
 [node name="SuitSelector" type="PanelContainer" parent="GameView/UI/GameUI" unique_id=37064052]
 visible = false
 layout_mode = 1
@@ -423,34 +443,14 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_r2c04")
 theme_override_styles/hover = SubResource("StyleBoxFlat_wghg5")
 text = "Play"
 
-[node name="EndTurnButtonContainer" type="PanelContainer" parent="GameView/UI/GameUI" unique_id=574502807]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -28.5
-offset_top = -136.0
-offset_right = 36.5
-offset_bottom = -96.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="Button" type="Button" parent="GameView/UI/GameUI/EndTurnButtonContainer" unique_id=533665281]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("StyleBoxFlat_m0q3i")
-text = "End Turn"
-
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=439117650]
 stream = ExtResource("4_jyhfs")
 volume_db = -10.0
 autoplay = true
 
+[connection signal="pressed" from="GameView/UI/GameUI/EndTurnButtonContainer/Button" to="." method="_on_button_pressed"]
 [connection signal="pressed" from="GameView/UI/GameUI/SuitSelector/VBoxContainer/HBoxContainer/Hearts" to="." method="_on_hearts_pressed"]
 [connection signal="pressed" from="GameView/UI/GameUI/SuitSelector/VBoxContainer/HBoxContainer/Diamonds" to="." method="_on_diamonds_pressed"]
 [connection signal="pressed" from="GameView/UI/GameUI/SuitSelector/VBoxContainer/HBoxContainer2/Clubs" to="." method="_on_clubs_pressed"]
 [connection signal="pressed" from="GameView/UI/GameUI/SuitSelector/VBoxContainer/HBoxContainer2/Spades" to="." method="_on_spades_pressed"]
 [connection signal="pressed" from="GameView/UI/GameUI/MainMenuContainer/Play" to="." method="_on_play_pressed"]
-[connection signal="pressed" from="GameView/UI/GameUI/EndTurnButtonContainer/Button" to="." method="_on_button_pressed"]

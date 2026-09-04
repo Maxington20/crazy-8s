@@ -120,6 +120,7 @@ func deal_starting_discard() -> void:
 	)
 
 	card_view.show_card(starting_card)
+	SoundManager.play_card()
 
 	game_state.discard_pile.append(starting_card)
 
@@ -311,13 +312,16 @@ func animate_card_to_discard(
 	var starting_position := card_view.global_position
 
 	card_view.reparent(game_view.animation_layer)
-
 	card_view.global_position = starting_position
 
-	await card_view.move_to(
-		game_view.discard_pile_container.global_position
-	)
+	var sound_timer := get_tree().create_timer(0.35)
+	sound_timer.timeout.connect(SoundManager.play_card)
 
+	await card_view.move_to(
+		game_view.discard_pile_container.global_position,
+		0.75
+	)
+	
 
 func animate_draw_to_player(
 	card: CardData
@@ -338,6 +342,9 @@ func animate_draw_to_player(
 	
 	card_view.show_card(card)
 	
+	var sound_timer := get_tree().create_timer(0.35)
+	sound_timer.timeout.connect(SoundManager.play_card)
+	
 	await card_view.move_to(target_positioin)
 	
 	card_view.queue_free()
@@ -353,6 +360,9 @@ func animate_draw_to_cpu(
 	card_view.show_back(card)
 
 	card_view.global_position = game_view.draw_pile_container.global_position
+
+	var sound_timer := get_tree().create_timer(0.35)
+	sound_timer.timeout.connect(SoundManager.play_card)
 
 	await card_view.move_to(
 		get_cpu_draw_target()
