@@ -149,27 +149,30 @@ func _on_player_card_double_clicked(
 	
 	# check for special cards
 	if card.rank == CardData.Rank.EIGHT:
-		game_state.rules.eight_is_played(game_state)
-		# remove below after suit selectin for player complete
-		game_state.is_choosing_suit = true
-		game_view.suit_selector_container.visible = true
-		var suit = await suit_selected
-		game_state.is_choosing_suit = false
-		game_state.message_to_display = "Player changed it to " + CardData.Suit.keys()[suit]
+		if game_state.player_hand.size() != 1:
+			game_state.rules.eight_is_played(game_state)
+			# remove below after suit selectin for player complete
+			game_state.is_choosing_suit = true
+			game_view.suit_selector_container.visible = true
+			var suit = await suit_selected
+			game_state.is_choosing_suit = false
+			game_state.message_to_display = "Player changed it to " + CardData.Suit.keys()[suit]
 	
 	else:
 		game_state.active_suit = card.suit
 		
 	if card.rank == CardData.Rank.TWO:
-		game_state.rules.two_is_played(game_state)
-		game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards CPU!"
+		if game_state.player_hand.size() != 1:
+			game_state.rules.two_is_played(game_state)
+			game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards CPU!"
 	else:
 		game_state.pending_draw_count = 0
 		game_state.active_draw_target = game_state.DrawTarget.NONE
 	
 	if card.rank == CardData.Rank.JACK:
-		game_state.extra_turn = true
-		game_state.message_to_display = "Miss A Turn CPU!"
+		if game_state.player_hand.size() != 1:
+			game_state.extra_turn = true
+			game_state.message_to_display = "Miss A Turn CPU!"
 		
 	game_state.cards_played_this_turn += 1
 	game_state.rank_being_played_this_turn = card.rank
@@ -184,6 +187,13 @@ func _on_player_card_double_clicked(
 	game_view.display_player_hand()
 	game_view.display_discard_pile()
 	
+	if game_state.player_hand.is_empty():
+		game_state.is_game_over = true
+		game_state.message_to_display = "Player Wins!"
+		await game_view.show_message(game_state.message_to_display, true)
+		get_tree().reload_current_scene()
+		return
+	
 	if game_state.message_to_display.length() > 0:
 		await game_view.show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
@@ -193,13 +203,7 @@ func _on_player_card_double_clicked(
 		await game_view.show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 	
-	if game_state.player_hand.is_empty():
-		game_state.is_game_over = true
-		game_state.message_to_display = "Player Wins!"
-		await game_view.show_message(game_state.message_to_display, true)
-		get_tree().reload_current_scene()
-		return
-	
+
 	game_view.set_suit_label()
 	
 	game_view.end_turn_button_container.visible = true
@@ -234,28 +238,24 @@ func _on_draw_pile_card_clicked(
 
 func cpu_turn() -> void:
 	
-	print("cpu turn start")
-	print("cpu hand size " ,game_state.cpu_hand.size())
-	print("cards played this turn: ", game_state.cards_played_this_turn)
-	
 	if game_state.is_game_over:
 		return
 	
 	await begin_cpu_turn()
 	
-	
-		
-	print("cpu loop iteration")
-	
 	var card_to_play := game_state.cpu_strategy.find_cpu_playable_card(game_state)
 	
 	while card_to_play != null:
-		
-		print("cpu playing: ", card_to_play)
 		await cpu_play_card(card_to_play)
 		
+		if game_state.cpu_hand.is_empty():
+			game_state.is_game_over = true
+			game_state.message_to_display = "CPU Wins!"
+			await game_view.show_message(game_state.message_to_display, true)
+			get_tree().reload_current_scene()
+			return
+		
 		card_to_play = game_state.cpu_strategy.find_cpu_playable_card(game_state)
-		print("cpu finished playing card")
 		
 	if !game_state.has_drawn_this_turn and game_state.cards_played_this_turn == 0:
 		if refill_draw_pile():
@@ -280,24 +280,8 @@ func cpu_turn() -> void:
 		await game_view.show_message(game_state.message_to_display)
 		game_state.message_to_display = ""
 	
-	if game_state.cpu_hand.is_empty():
-		game_state.is_game_over = true
-		game_state.message_to_display = "CPU Wins!"
-		await game_view.show_message(game_state.message_to_display, true)
-		get_tree().reload_current_scene()
-		return
-	
-	#if extra_turn:
-		#await get_tree().create_timer(1.0).timeout
-		#await cpu_turn()
-		#return
-#
-#game_state.is_player_turn = true
-	
-	#await begin_player_turn()
-	print("cpu loop finished")
 	await end_turn()
-	print("cpu end_turn finished")
+
 
 
 func refill_draw_pile() -> bool:
