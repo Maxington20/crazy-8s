@@ -160,7 +160,7 @@ func _on_player_card_double_clicked(
 		game_state.active_suit = card.suit
 		
 	if card.rank == CardData.Rank.TWO:
-		game_state.rules.two_is_played(game_state)		
+		game_state.rules.two_is_played(game_state)
 		game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards CPU!"
 	else:
 		game_state.pending_draw_count = 0
