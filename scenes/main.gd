@@ -9,6 +9,7 @@ var game_state: GameState = GameState.new()
 
 signal suit_selected(suit: CardData.Suit)
 signal game_started()
+signal turn_ended()
 
 func _ready() -> void:
 	game_view.initialize(game_state)
@@ -20,6 +21,7 @@ func _ready() -> void:
 	game_view.message_container.visible = false 
 	game_view.suit_selector_container.visible = false
 	game_view.main_menu_container.visible = true
+	game_view.end_turn_button_container.visible = false
 	
 	await game_started
 	
@@ -141,7 +143,6 @@ func _on_player_card_double_clicked(
 		return
 	
 	var top_card: CardData = game_state.discard_pile.back()
-	var extra_turn: bool = false
 	
 	if !game_state.rules.can_play_card(card, top_card, game_state):
 		return
@@ -167,11 +168,11 @@ func _on_player_card_double_clicked(
 		game_state.active_draw_target = game_state.DrawTarget.NONE
 	
 	if card.rank == CardData.Rank.JACK:
-		extra_turn = true
+		game_state.extra_turn = true
 		game_state.message_to_display = "Miss A Turn CPU!"
-	
-	if !extra_turn:
-		game_state.is_player_turn = false
+		
+	game_state.cards_played_this_turn += 1
+	game_state.rank_being_played_this_turn = card.rank
 
 	await animate_card_to_discard(card_view)
 
@@ -201,120 +202,89 @@ func _on_player_card_double_clicked(
 	
 	game_view.set_suit_label()
 	
-	if !extra_turn:
-		await cpu_turn()
+	game_view.end_turn_button_container.visible = true
 
 		
 
 func _on_draw_pile_card_clicked(
 	_card: CardData
 ) -> void:
-	if !game_state	.is_player_turn or game_state.is_game_over or game_state.is_choosing_suit:
+	if !game_state	.is_player_turn or game_state.is_game_over or game_state.is_choosing_suit or game_state.has_drawn_this_turn or game_state.cards_played_this_turn > 0:
 		return
 
 	if !refill_draw_pile():
 		return
 	
 	game_state.active_draw_target = game_state.DrawTarget.NONE
-	game_state.is_player_turn = false
 
 	var drawn_card: CardData = game_state.deck.draw_card()
+
+	game_state.has_drawn_this_turn = true
 
 	await animate_draw_to_player(drawn_card)
 
 	game_state.player_hand.append(drawn_card)
-
+	
 	game_view.display_player_hand()
 	game_view.display_draw_pile()
 
 	await get_tree().create_timer(1.0).timeout
 	
-	await cpu_turn()
-
+	game_view.end_turn_button_container.visible = true
 
 func cpu_turn() -> void:
 	if game_state.is_game_over:
 		return
 	
-	var extra_turn = false
-	
 	await begin_cpu_turn()
 	
-	var card_to_play := game_state.cpu_strategy.find_cpu_playable_card(game_state)
+	for card in game_state.cpu_hand:
 		
-	if card_to_play:
-		
-		if card_to_play.rank == CardData.Rank.EIGHT:
-			game_state.rules.eight_is_played(game_state, game_state.cpu_hand)
-			game_state.message_to_display = "CPU Changed Suit To " + str(CardData.Suit.keys()[game_state.active_suit])
-		
-		else:
-			game_state.active_suit = card_to_play.suit
+		var card_to_play := game_state.cpu_strategy.find_cpu_playable_card(game_state)
 			
-		if card_to_play.rank == CardData.Rank.TWO:
-			game_state.rules.two_is_played(game_state)
-			game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards Player!" 
-		else:
-			game_state.pending_draw_count = 0
-			game_state.active_draw_target = game_state.DrawTarget.NONE
+		if card_to_play:
+			
+			await cpu_play_card(card_to_play)
+			
+		elif !game_state.has_drawn_this_turn and game_state.cards_played_this_turn == 0:
+			if refill_draw_pile():
+				var drawn_card: CardData = game_state.deck.draw_card()
+
+				await animate_draw_to_cpu(drawn_card)
+				game_state.active_draw_target = game_state.DrawTarget.NONE
+				game_state.cpu_hand.append(drawn_card)
+
+				game_view.display_cpu_hand(game_state)
+				game_view.display_draw_pile()
+				
+				var top_card: CardData = game_state.discard_pile.back()
+				
+				game_state.has_drawn_this_turn = true
+				
+				if game_state.rules.can_play_card(drawn_card, top_card, game_state):
+					await cpu_play_card(drawn_card)
 		
-		if card_to_play.rank == CardData.Rank.JACK:
-			game_state.message_to_display = "Miss A Turn Player!"
-			extra_turn = true
-		
-		var card_view := find_cpu_card_view(card_to_play)
-
-		if card_view:
-			card_view.show_card(card_to_play)
-
-			await animate_card_to_discard(card_view)
-
-		game_state.cpu_hand.erase(card_to_play)
-		game_state.discard_pile.append(card_to_play)
-
-		if card_view:
-			card_view.queue_free()
-
-		game_view.display_cpu_hand(game_state)
-		game_view.display_discard_pile()
-		game_view.set_suit_label()
-		
-		if game_state.message_to_display.length() > 0:
+		if game_state.cpu_hand.size() == 1:
+			game_state.message_to_display = "Knock Knock, Last Card!"
 			await game_view.show_message(game_state.message_to_display)
 			game_state.message_to_display = ""
 		
-	else:
-		if refill_draw_pile():
-			var drawn_card: CardData = game_state.deck.draw_card()
-
-			await animate_draw_to_cpu(drawn_card)
-			game_state.active_draw_target = game_state.DrawTarget.NONE
-			game_state.cpu_hand.append(drawn_card)
-
-			game_view.display_cpu_hand(game_state)
-			game_view.display_draw_pile()
+		if game_state.cpu_hand.is_empty():
+			game_state.is_game_over = true
+			game_state.message_to_display = "CPU Wins!"
+			await game_view.show_message(game_state.message_to_display, true)
+			get_tree().reload_current_scene()
+			return
+		
+		#if extra_turn:
+			#await get_tree().create_timer(1.0).timeout
+			#await cpu_turn()
+			#return
+	#
+	#game_state.is_player_turn = true
 	
-	if game_state.cpu_hand.size() == 1:
-		game_state.message_to_display = "Knock Knock, Last Card!"
-		await game_view.show_message(game_state.message_to_display)
-		game_state.message_to_display = ""
-	
-	if game_state.cpu_hand.is_empty():
-		game_state.is_game_over = true
-		game_state.message_to_display = "CPU Wins!"
-		await game_view.show_message(game_state.message_to_display, true)
-		get_tree().reload_current_scene()
-		return
-	
-	if extra_turn:
-		await get_tree().create_timer(1.0).timeout
-		await cpu_turn()
-		return
-	
-	game_state.is_player_turn = true
-	
-	await begin_player_turn()
-	
+	#await begin_player_turn()
+	end_turn()
 	
 
 
@@ -492,3 +462,71 @@ func _on_hearts_pressed() -> void:
 func _on_play_pressed() -> void:
 	game_view.main_menu_container.visible = false
 	game_started.emit()
+
+
+func _on_button_pressed() -> void:
+	game_view.end_turn_button_container.visible = false
+	await end_turn()
+	
+	
+func end_turn() -> void:
+	game_state.has_drawn_this_turn = false
+	game_state.rank_being_played_this_turn = -1
+	game_state.cards_played_this_turn = 0
+	
+	if !game_state.extra_turn:
+		game_state.is_player_turn = !game_state.is_player_turn
+	
+	game_state.extra_turn = false
+	
+	if game_state.is_player_turn:
+		await begin_player_turn()
+		
+	else:
+		await cpu_turn()
+	
+
+func cpu_play_card(card_to_play: CardData) -> void:
+	
+	if card_to_play.rank == CardData.Rank.EIGHT:
+			game_state.rules.eight_is_played(game_state, game_state.cpu_hand)
+			game_state.message_to_display = "CPU Changed Suit To " + str(CardData.Suit.keys()[game_state.active_suit])
+	
+	else:
+		game_state.active_suit = card_to_play.suit
+		
+	if card_to_play.rank == CardData.Rank.TWO:
+		game_state.rules.two_is_played(game_state)
+		game_state.message_to_display = "Pick Up " + str(game_state.pending_draw_count) + " Cards Player!" 
+	else:
+		game_state.pending_draw_count = 0
+		game_state.active_draw_target = game_state.DrawTarget.NONE
+	
+	if card_to_play.rank == CardData.Rank.JACK:
+		game_state.message_to_display = "Miss A Turn Player!"
+		game_state.extra_turn = true
+	
+	var card_view := find_cpu_card_view(card_to_play)
+
+	if card_view:
+		card_view.show_card(card_to_play)
+
+		await animate_card_to_discard(card_view)
+
+	game_state.cpu_hand.erase(card_to_play)
+	game_state.discard_pile.append(card_to_play)
+
+	if card_view:
+		card_view.queue_free()
+
+	game_view.display_cpu_hand(game_state)
+	game_view.display_discard_pile()
+	game_view.set_suit_label()
+	
+	if game_state.message_to_display.length() > 0:
+		await game_view.show_message(game_state.message_to_display)
+		game_state.message_to_display = ""
+	
+	game_state.cards_played_this_turn += 1
+	game_state.rank_being_played_this_turn = card_to_play.rank
+	

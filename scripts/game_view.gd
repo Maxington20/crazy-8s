@@ -20,6 +20,7 @@ const CARD_FRONT_TEXTURE_DARK := preload("res://art/CardFrontStockDark.png")
 @onready var message_container: PanelContainer = $UI/GameUI/MessageContainer
 @onready var suit_selector_container: PanelContainer = $UI/GameUI/SuitSelector
 @onready var main_menu_container: Panel = $UI/GameUI/MainMenuContainer
+@onready var end_turn_button_container: PanelContainer = $UI/GameUI/EndTurnButtonContainer
 
 signal draw_pile_clicked(card: CardData)
 signal player_card_double_clicked(card_view: CardView, card: CardData)

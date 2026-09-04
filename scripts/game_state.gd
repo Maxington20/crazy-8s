@@ -22,3 +22,7 @@ var player_hand: Array[CardData] = []
 var cpu_hand: Array[CardData] = []
 var discard_pile: Array[CardData] = []
 var rules: Crazy8Rules = Crazy8Rules.new()
+var rank_being_played_this_turn: int = -1
+var cards_played_this_turn: int = 0
+var has_drawn_this_turn: bool = false
+var extra_turn: bool = false

@@ -5,8 +5,13 @@ extends RefCounted
 func can_play_card(
 	card: CardData,
 	top_card: CardData,
-	game_state: GameState
+	game_state: GameState,
 ) -> bool:
+	
+	if game_state.cards_played_this_turn > 0:
+		return(
+			card.rank == game_state.rank_being_played_this_turn
+		)
 	
 	return (
 		card.rank == CardData.Rank.EIGHT
