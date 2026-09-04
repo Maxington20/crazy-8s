@@ -283,7 +283,6 @@ func cpu_turn() -> void:
 	await end_turn()
 
 
-
 func refill_draw_pile() -> bool:
 	if !game_state.deck.cards.is_empty():
 		return true
