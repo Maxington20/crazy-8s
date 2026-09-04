@@ -233,59 +233,71 @@ func _on_draw_pile_card_clicked(
 	game_view.end_turn_button_container.visible = true
 
 func cpu_turn() -> void:
+	
+	print("cpu turn start")
+	print("cpu hand size " ,game_state.cpu_hand.size())
+	print("cards played this turn: ", game_state.cards_played_this_turn)
+	
 	if game_state.is_game_over:
 		return
 	
 	await begin_cpu_turn()
 	
-	for card in game_state.cpu_hand:
+	
 		
-		var card_to_play := game_state.cpu_strategy.find_cpu_playable_card(game_state)
-			
-		if card_to_play:
-			
-			await cpu_play_card(card_to_play)
-			
-		elif !game_state.has_drawn_this_turn and game_state.cards_played_this_turn == 0:
-			if refill_draw_pile():
-				var drawn_card: CardData = game_state.deck.draw_card()
+	print("cpu loop iteration")
+	
+	var card_to_play := game_state.cpu_strategy.find_cpu_playable_card(game_state)
+	
+	while card_to_play != null:
+		
+		print("cpu playing: ", card_to_play)
+		await cpu_play_card(card_to_play)
+		
+		card_to_play = game_state.cpu_strategy.find_cpu_playable_card(game_state)
+		print("cpu finished playing card")
+		
+	if !game_state.has_drawn_this_turn and game_state.cards_played_this_turn == 0:
+		if refill_draw_pile():
+			var drawn_card: CardData = game_state.deck.draw_card()
 
-				await animate_draw_to_cpu(drawn_card)
-				game_state.active_draw_target = game_state.DrawTarget.NONE
-				game_state.cpu_hand.append(drawn_card)
+			await animate_draw_to_cpu(drawn_card)
+			game_state.active_draw_target = game_state.DrawTarget.NONE
+			game_state.cpu_hand.append(drawn_card)
 
-				game_view.display_cpu_hand(game_state)
-				game_view.display_draw_pile()
-				
-				var top_card: CardData = game_state.discard_pile.back()
-				
-				game_state.has_drawn_this_turn = true
-				
-				if game_state.rules.can_play_card(drawn_card, top_card, game_state):
-					await cpu_play_card(drawn_card)
-		
-		if game_state.cpu_hand.size() == 1:
-			game_state.message_to_display = "Knock Knock, Last Card!"
-			await game_view.show_message(game_state.message_to_display)
-			game_state.message_to_display = ""
-		
-		if game_state.cpu_hand.is_empty():
-			game_state.is_game_over = true
-			game_state.message_to_display = "CPU Wins!"
-			await game_view.show_message(game_state.message_to_display, true)
-			get_tree().reload_current_scene()
-			return
-		
-		#if extra_turn:
-			#await get_tree().create_timer(1.0).timeout
-			#await cpu_turn()
-			#return
-	#
-	#game_state.is_player_turn = true
+			game_view.display_cpu_hand(game_state)
+			game_view.display_draw_pile()
+			
+			var top_card: CardData = game_state.discard_pile.back()
+			
+			game_state.has_drawn_this_turn = true
+			
+			if game_state.rules.can_play_card(drawn_card, top_card, game_state):
+				await cpu_play_card(drawn_card)
+	
+	if game_state.cpu_hand.size() == 1:
+		game_state.message_to_display = "Knock Knock, Last Card!"
+		await game_view.show_message(game_state.message_to_display)
+		game_state.message_to_display = ""
+	
+	if game_state.cpu_hand.is_empty():
+		game_state.is_game_over = true
+		game_state.message_to_display = "CPU Wins!"
+		await game_view.show_message(game_state.message_to_display, true)
+		get_tree().reload_current_scene()
+		return
+	
+	#if extra_turn:
+		#await get_tree().create_timer(1.0).timeout
+		#await cpu_turn()
+		#return
+#
+#game_state.is_player_turn = true
 	
 	#await begin_player_turn()
-	end_turn()
-	
+	print("cpu loop finished")
+	await end_turn()
+	print("cpu end_turn finished")
 
 
 func refill_draw_pile() -> bool:
@@ -384,10 +396,11 @@ func get_cpu_draw_target() -> Vector2:
 	)
 
 
-func find_cpu_card_view(
-	card: CardData
-) -> CardView:
+func find_cpu_card_view(card: CardData) -> CardView:
 	for child in game_view.cpu_hand_container.get_children():
+		if child.is_queued_for_deletion():
+			continue
+
 		if child is CardView and child.card_data == card:
 			return child
 
